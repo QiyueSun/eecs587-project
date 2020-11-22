@@ -8,7 +8,7 @@
 
 using namespace std;
 
-void SDK_Import(string filepath, vector<vector<int64_t>>& mtx) {
+void SDK_Import(string filepath, vector<int64_t>& mtx) {
     ifstream file;
     file.open(filepath);
     int row_idx = 0;
@@ -22,7 +22,7 @@ void SDK_Import(string filepath, vector<vector<int64_t>>& mtx) {
                 if (line[i] == ' ') break;
             }
             int num = stoi(line.substr(prev, i));
-            mtx[row_idx][col_idx] = translate_field(num);
+            mtx[row_idx * SIZE + col_idx] = translate_field(num);
             i++; prev = i; col_idx++;
         }
         row_idx++;
@@ -30,36 +30,36 @@ void SDK_Import(string filepath, vector<vector<int64_t>>& mtx) {
     file.close();
 }
 
-void SDK_Copy(vector<vector<int64_t>> src, vector<vector<int64_t>> dst) {
+void SDK_Copy(vector<int64_t>& src, vector<int64_t>& dst) {
   for (int64_t a = 0; a < SIZE; a++) {
     for (int64_t b = 0; b < SIZE; b++) {
-      dst[a][b] = src[a][b];
+      dst[a * SIZE + b] = src[a * SIZE + b];
     }
   }
 }
 
-void SDK_Print(vector<vector<int64_t>> mtx) {
+void SDK_Print(vector<int64_t>& mtx) {
   for (int64_t a = 0; a < SIZE; a++) {
     for (int64_t b = 0; b < SIZE; b++) {
-      printf("%d ", mtx[a][b]);
-    }
-    printf("\n");
-  }
-}
-
-void SDK_Pretty_Print(vector<vector<int64_t>> mtx) {
-  for (int64_t a = 0; a < SIZE; a++) {
-    for (int64_t b = 0; b < SIZE; b++) {
-      printf("%d ", to_pretty(mtx[a][b]));
+      printf("%d ", mtx[a * SIZE + b]);
     }
     printf("\n");
   }
 }
 
-void SDK_Apply(vector<vector<int64_t>> dst, vector<vector<int64_t>> src) {
+void SDK_Pretty_Print(vector<int64_t>& mtx) {
   for (int64_t a = 0; a < SIZE; a++) {
     for (int64_t b = 0; b < SIZE; b++) {
-      dst[a][b] &= src[a][b];
+      printf("%d ", to_pretty(mtx[a * SIZE + b]));
+    }
+    printf("\n");
+  }
+}
+
+void SDK_Apply(vector<int64_t>& dst, vector<int64_t>& src) {
+  for (int64_t a = 0; a < SIZE; a++) {
+    for (int64_t b = 0; b < SIZE; b++) {
+      dst[a * SIZE + b] &= src[a * SIZE + b];
     }
   }
 }

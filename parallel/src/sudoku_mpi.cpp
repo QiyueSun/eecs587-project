@@ -25,8 +25,8 @@
 using namespace std;
 
 int main(int argc, char *argv[]) {
-    vector<vector<int64_t>> kMATRIX;
-    kMATRIX.resize(SIZE, vector<int64_t>(SIZE, 0));
+    vector<int64_t> kMATRIX;
+    kMATRIX.resize(SIZE * SIZE, 0);
     SDK_Import(string(argv[1]), kMATRIX);
 
     MPI_Init(&argc, &argv);
@@ -53,8 +53,7 @@ retry:
     if (comm_rank == 0) {
         SDK_Mark_Vertical_Availables(kMATRIX);
 
-        int32_t tmp[SIZE][SIZE];
-        vector<vector<int64_t>> tmp;
+        vector<int64_t> tmp(SIZE * SIZE, 0);
 
         MPI_Recv(tmp.data(), SIZE * SIZE, MPI_INT, 1, 0, MPI_COMM_WORLD, NULL);
         SDK_Apply(kMATRIX, tmp);
@@ -64,12 +63,12 @@ retry:
     else if (comm_rank == 1) {
         SDK_Mark_Horizontal_Availables(kMATRIX);
 
-        MPI_Send(static_cast<void*>(kMATRIX.data()), SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
+        MPI_Send(kMATRIX.data(), SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
     }
     else if (comm_rank == 2) {
         SDK_Mark_Subbox_Availables(kMATRIX);
 
-        MPI_Send(static_cast<void*>(kMATRIX.data()), SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
+        MPI_Send(kMATRIX.data(), SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
     }
     else {
         goto bailout;
