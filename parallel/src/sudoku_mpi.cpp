@@ -29,12 +29,7 @@ int main(int argc, char *argv[]) {
     kMATRIX.resize(SIZE * SIZE, 0);
     SDK_Import(string(argv[1]), kMATRIX);
     
-    for (int i=0; i<SIZE; i++) {
-        for (int j=0; j<SIZE; j++) {
-            cout << kMATRIX[i][j] << " ";
-        }
-        cout << endl;
-    }
+    
 
     MPI_Init(&argc, &argv);
 
@@ -52,6 +47,12 @@ int main(int argc, char *argv[]) {
     }
 
     if (comm_rank == 0) {
+        for (int i=0; i<SIZE; i++) {
+            for (int j=0; j<SIZE; j++) {
+                cout << kMATRIX[i * SIZE + j] << " ";
+            }
+            cout << endl;
+        }
         is_master = true;
         time_start = MPI_Wtime();
     }
@@ -62,9 +63,9 @@ retry:
 
         vector<int64_t> tmp(SIZE * SIZE, 0);
 
-        MPI_Recv(tmp, SIZE * SIZE, MPI_LONG, 1, 0, MPI_COMM_WORLD, NULL);
+        MPI_Recv(tmp.data(), SIZE * SIZE, MPI_LONG, 1, 0, MPI_COMM_WORLD, NULL);
         SDK_Apply(kMATRIX, tmp);
-        MPI_Recv(tmp, SIZE * SIZE, MPI_LONG, 2, 0, MPI_COMM_WORLD, NULL);
+        MPI_Recv(tmp.data(), SIZE * SIZE, MPI_LONG, 2, 0, MPI_COMM_WORLD, NULL);
         SDK_Apply(kMATRIX, tmp);
     }
     else if (comm_rank == 1) {

@@ -22,7 +22,7 @@ void SDK_Mark_Vertical_Availables(std::vector<int64_t>& mtx) {
         for (int32_t b = 0; b < SIZE; ++b) {
             if (!is_field_literal(mtx[b * SIZE + a])) {
                 mtx[b * SIZE + a] &= unused_numbers;
-                assert(mtx[a * SIZE + b] != 0);
+                assert(mtx[b * SIZE + a] != 0);
             }
         }
     }
