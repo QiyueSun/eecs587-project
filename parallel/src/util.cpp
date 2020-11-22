@@ -56,10 +56,10 @@ void SDK_Pretty_Print(vector<vector<int64_t>> mtx) {
   }
 }
 
-void SDK_Apply(vector<vector<int64_t>> dst, vector<vector<int64_t>> src) {
+void SDK_Apply(vector<vector<int64_t>> dst, int64_t src[]) {
   for (int64_t a = 0; a < SIZE; a++) {
     for (int64_t b = 0; b < SIZE; b++) {
-      dst[a][b] &= src[a][b];
+      dst[a][b] &= src[a*SIZE + b];
     }
   }
 }
