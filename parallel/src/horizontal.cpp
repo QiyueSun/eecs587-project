@@ -20,7 +20,7 @@ void SDK_Mark_Horizontal_Availables(std::vector<int64_t>& mtx) {
         //  Insert unused numbers to empty fields
         int64_t unused_numbers = result ^ 0b111111111;
         for (int64_t b = 0; b < SIZE; ++b) {
-            if (!is_field_literal(mtx[a][b])) {
+            if (!is_field_literal(mtx[a * SIZE + b])) {
                 mtx[a * SIZE + b] &= unused_numbers;
                 assert(mtx[a * SIZE + b] != 0);
             }
