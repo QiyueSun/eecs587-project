@@ -54,21 +54,22 @@ retry:
         SDK_Mark_Vertical_Availables(kMATRIX);
 
         int32_t tmp[SIZE][SIZE];
+        vector<vector<int64_t>> tmp;
 
-        MPI_Recv(tmp, SIZE * SIZE, MPI_INT, 1, 0, MPI_COMM_WORLD, NULL);
+        MPI_Recv(tmp.data(), SIZE * SIZE, MPI_INT, 1, 0, MPI_COMM_WORLD, NULL);
         SDK_Apply(kMATRIX, tmp);
-        MPI_Recv(tmp, SIZE * SIZE, MPI_INT, 2, 0, MPI_COMM_WORLD, NULL);
+        MPI_Recv(tmp.data(), SIZE * SIZE, MPI_INT, 2, 0, MPI_COMM_WORLD, NULL);
         SDK_Apply(kMATRIX, tmp);
     }
     else if (comm_rank == 1) {
         SDK_Mark_Horizontal_Availables(kMATRIX);
 
-        MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
+        MPI_Send(static_cast<void*>(kMATRIX.data()), SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
     }
     else if (comm_rank == 2) {
         SDK_Mark_Subbox_Availables(kMATRIX);
 
-        MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
+        MPI_Send(static_cast<void*>(kMATRIX.data()), SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
     }
     else {
         goto bailout;
