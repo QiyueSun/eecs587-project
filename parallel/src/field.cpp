@@ -4,7 +4,7 @@
 bool is_field_literal(int64_t field) {
     if (((field + 1) & field) == 0) 
         return false;
-    assert((field & (field-1)) == 0);
+    // assert((field & (field-1)) == 0);
     return true;
 }
 

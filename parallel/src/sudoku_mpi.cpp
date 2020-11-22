@@ -28,6 +28,13 @@ int main(int argc, char *argv[]) {
     vector<int64_t> kMATRIX;
     kMATRIX.resize(SIZE * SIZE, 0);
     SDK_Import(string(argv[1]), kMATRIX);
+    
+    for (int i=0; i<SIZE; i++) {
+        for (int j=0; j<SIZE; j++) {
+            cout << kMATRIX[i][j] << " ";
+        }
+        cout << endl;
+    }
 
     MPI_Init(&argc, &argv);
 
@@ -55,26 +62,26 @@ retry:
 
         vector<int64_t> tmp(SIZE * SIZE, 0);
 
-        MPI_Recv(tmp.data(), SIZE * SIZE, MPI_INT, 1, 0, MPI_COMM_WORLD, NULL);
+        MPI_Recv(tmp, SIZE * SIZE, MPI_LONG, 1, 0, MPI_COMM_WORLD, NULL);
         SDK_Apply(kMATRIX, tmp);
-        MPI_Recv(tmp.data(), SIZE * SIZE, MPI_INT, 2, 0, MPI_COMM_WORLD, NULL);
+        MPI_Recv(tmp, SIZE * SIZE, MPI_LONG, 2, 0, MPI_COMM_WORLD, NULL);
         SDK_Apply(kMATRIX, tmp);
     }
     else if (comm_rank == 1) {
         SDK_Mark_Horizontal_Availables(kMATRIX);
 
-        MPI_Send(kMATRIX.data(), SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
+        MPI_Send(kMATRIX.data(), SIZE * SIZE, MPI_LONG, 0, 0, MPI_COMM_WORLD);
     }
     else if (comm_rank == 2) {
         SDK_Mark_Subbox_Availables(kMATRIX);
 
-        MPI_Send(kMATRIX.data(), SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
+        MPI_Send(kMATRIX.data(), SIZE * SIZE, MPI_LONG, 0, 0, MPI_COMM_WORLD);
     }
     else {
         goto bailout;
     }
 
-    MPI_Bcast(kMATRIX, SIZE * SIZE, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(kMATRIX.data(), SIZE * SIZE, MPI_LONG, 0, MPI_COMM_WORLD);
 
     if (SDK_Check_Breakdown(kMATRIX)) {
         if (is_master) {
@@ -89,9 +96,9 @@ bailout:
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
 
-    if (id == 0) {
+    if (comm_rank == 0) {
         double duration = MPI_Wtime() - time_start;
-        cout << "p:" << p << << "\nRunning time:" << duration << endl;
+        cout << "p:" << comm_size << "\nRunning time:" << duration << endl;
     }
 
     // cout << "Total number of cores: " << max_threads << endl;
