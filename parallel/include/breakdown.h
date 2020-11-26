@@ -4,6 +4,6 @@
 #include "defs.h"
 #include <stdbool.h>
 
-bool SDK_Check_Breakdown(int32_t mtx[SIZE*SIZE]);
+bool SDK_Check_Breakdown(int32_t mtx[]);
 
 #endif
