@@ -2,9 +2,8 @@
 #define BREAKDOWN_HEADER
 
 #include "defs.h"
-#include <vector>
 #include <stdbool.h>
 
-bool SDK_Check_Breakdown(std::vector<int32_t>& mtx);
+bool SDK_Check_Breakdown(int32_t mtx[SIZE*SIZE]);
 
 #endif

@@ -1,13 +1,14 @@
 #ifndef UTIL_HEADER
 #define UTIL_HEADER
 
-#include <vector>
+#include "defs.h"
 #include <string>
 
-void SDK_Import(std::string filepath, std::vector<int32_t>& mtx);
-void SDK_Copy(std::vector<int32_t>& src, std::vector<int32_t>& dst);
-void SDK_Print(std::vector<int32_t>& mtx);
-void SDK_Pretty_Print(std::vector<int32_t>& mtx);
-void SDK_Apply(std::vector<int32_t>& dst, std::vector<int32_t>& src);
+
+void SDK_Import(std::string filepath, int32_t mtx[SIZE*SIZE]);
+void SDK_Copy(int32_t src[SIZE*SIZE], int32_t dst[SIZE*SIZE]);
+void SDK_Print(int32_t mtx[SIZE*SIZE]);
+void SDK_Pretty_Print(int32_t mtx[SIZE*SIZE]);
+void SDK_Apply(int32_t dst[SIZE*SIZE], int32_t src[SIZE*SIZE]);
 
 #endif
