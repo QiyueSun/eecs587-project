@@ -4,6 +4,6 @@
 #include "defs.h"
 #include <vector>
 
-void SDK_Mark_Subbox_Availables(std::vector<int64_t>& mtx);
+void SDK_Mark_Subbox_Availables(std::vector<int32_t>& mtx);
 
 #endif

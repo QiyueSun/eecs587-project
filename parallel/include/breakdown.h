@@ -5,6 +5,6 @@
 #include <vector>
 #include <stdbool.h>
 
-bool SDK_Check_Breakdown(std::vector<int64_t>& mtx);
+bool SDK_Check_Breakdown(std::vector<int32_t>& mtx);
 
 #endif

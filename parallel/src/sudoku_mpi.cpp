@@ -25,7 +25,7 @@
 using namespace std;
 
 int main(int argc, char *argv[]) {
-    vector<int64_t> kMATRIX;
+    vector<int32_t> kMATRIX;
     kMATRIX.resize(SIZE * SIZE, 0);
     SDK_Import(string(argv[1]), kMATRIX);
     
@@ -62,15 +62,15 @@ retry:
         SDK_Mark_Vertical_Availables(kMATRIX);
         // SDK_Pretty_Print(kMATRIX);
 
-        vector<int64_t> tmp(SIZE * SIZE, 0);
-        int64_t tmp_arr[SIZE*SIZE];
+        vector<int32_t> tmp(SIZE * SIZE, 0);
+        int32_t tmp_arr[SIZE*SIZE];
 
-        MPI_Recv(tmp_arr, SIZE * SIZE, MPI_UINT64_T, 1, 0, MPI_COMM_WORLD, NULL);
+        MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 1, 0, MPI_COMM_WORLD, NULL);
         for (int i=0; i<SIZE*SIZE; i++) {
             tmp[i] = tmp_arr[i];
         }
         SDK_Apply(kMATRIX, tmp);
-        MPI_Recv(tmp_arr, SIZE * SIZE, MPI_UINT64_T, 2, 0, MPI_COMM_WORLD, NULL);
+        MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 2, 0, MPI_COMM_WORLD, NULL);
         for (int i=0; i<SIZE*SIZE; i++) {
             tmp[i] = tmp_arr[i];
         }
@@ -78,7 +78,7 @@ retry:
     }
     else if (comm_rank == 1) {
         SDK_Mark_Horizontal_Availables(kMATRIX);
-        int64_t tmp_arr[SIZE*SIZE];
+        int32_t tmp_arr[SIZE*SIZE];
         for (int i=0; i<SIZE*SIZE; i++) {
             tmp_arr[i] = kMATRIX[i];
         }
@@ -86,11 +86,11 @@ retry:
         // SDK_Pretty_Print(kMATRIX);
         // cout << "\n";
 
-        MPI_Send(tmp_arr, SIZE * SIZE, MPI_UINT64_T, 0, 0, MPI_COMM_WORLD);
+        MPI_Send(tmp_arr, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
     }
     else if (comm_rank == 2) {
         SDK_Mark_Subbox_Availables(kMATRIX);
-        int64_t tmp_arr[SIZE*SIZE];
+        int32_t tmp_arr[SIZE*SIZE];
         for (int i=0; i<SIZE*SIZE; i++) {
             tmp_arr[i] = kMATRIX[i];
         }
@@ -98,16 +98,16 @@ retry:
         // SDK_Pretty_Print(kMATRIX);
         // cout << "\n";
 
-        MPI_Send(tmp_arr, SIZE * SIZE, MPI_UINT64_T, 0, 0, MPI_COMM_WORLD);
+        MPI_Send(tmp_arr, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
     }
     else {
         goto bailout;
     }
-    int64_t tmp_arr[SIZE*SIZE];
+    int32_t tmp_arr[SIZE*SIZE];
     for (int i=0; i<SIZE*SIZE; i++) {
         tmp_arr[i] = kMATRIX[i];
     }
-    MPI_Bcast(tmp_arr, SIZE * SIZE, MPI_UINT64_T, 0, MPI_COMM_WORLD);
+    MPI_Bcast(tmp_arr, SIZE * SIZE, MPI_INT, 0, MPI_COMM_WORLD);
 
     if (SDK_Check_Breakdown(kMATRIX)) {
         if (is_master) {
