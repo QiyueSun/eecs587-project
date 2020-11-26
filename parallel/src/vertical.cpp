@@ -5,8 +5,7 @@
 
 #include "field.h"
 
-void SDK_Mark_Vertical_Availables(std::vector<int32_t>& mtx) {
-    assert(mtx.size() != 0);
+void SDK_Mark_Vertical_Availables(int32_t mtx[SIZE*SIZE]) {
     for (int32_t a = 0; a < SIZE; ++a) {
         //  Find used numbers
         int32_t result = 0;

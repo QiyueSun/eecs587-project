@@ -5,8 +5,7 @@
 #include "field.h"
 
 
-void SDK_Mark_Horizontal_Availables(std::vector<int32_t>& mtx) {
-    assert(mtx.size() != 0);
+void SDK_Mark_Horizontal_Availables(int32_t mtx[SIZE*SIZE]) {
     for (int32_t a = 0; a < SIZE; ++a) {
         int32_t result = 0;
         for (int32_t b = 0; b < SIZE; ++b) {

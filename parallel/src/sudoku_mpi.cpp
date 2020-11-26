@@ -25,11 +25,8 @@
 using namespace std;
 
 int main(int argc, char *argv[]) {
-    vector<int32_t> kMATRIX;
-    kMATRIX.resize(SIZE * SIZE, 0);
+    int32_t kMATRIX[SIZE*SIZE];
     SDK_Import(string(argv[1]), kMATRIX);
-    
-    
 
     MPI_Init(&argc, &argv);
 
@@ -62,52 +59,34 @@ retry:
         SDK_Mark_Vertical_Availables(kMATRIX);
         // SDK_Pretty_Print(kMATRIX);
 
-        vector<int32_t> tmp(SIZE * SIZE, 0);
         int32_t tmp_arr[SIZE*SIZE];
 
         MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 1, 0, MPI_COMM_WORLD, NULL);
-        for (int i=0; i<SIZE*SIZE; i++) {
-            tmp[i] = tmp_arr[i];
-        }
-        SDK_Apply(kMATRIX, tmp);
+        SDK_Apply(kMATRIX, tmp_arr);
         MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 2, 0, MPI_COMM_WORLD, NULL);
-        for (int i=0; i<SIZE*SIZE; i++) {
-            tmp[i] = tmp_arr[i];
-        }
-        SDK_Apply(kMATRIX, tmp);
+        SDK_Apply(kMATRIX, tmp_arr);
     }
     else if (comm_rank == 1) {
         SDK_Mark_Horizontal_Availables(kMATRIX);
-        int32_t tmp_arr[SIZE*SIZE];
-        for (int i=0; i<SIZE*SIZE; i++) {
-            tmp_arr[i] = kMATRIX[i];
-        }
         // cout << "id = 1\n";
         // SDK_Pretty_Print(kMATRIX);
         // cout << "\n";
 
-        MPI_Send(tmp_arr, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
+        MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
     }
     else if (comm_rank == 2) {
         SDK_Mark_Subbox_Availables(kMATRIX);
-        int32_t tmp_arr[SIZE*SIZE];
-        for (int i=0; i<SIZE*SIZE; i++) {
-            tmp_arr[i] = kMATRIX[i];
-        }
         // cout << "id = 2\n";
         // SDK_Pretty_Print(kMATRIX);
         // cout << "\n";
 
-        MPI_Send(tmp_arr, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
+        MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
     }
     else {
         goto bailout;
     }
-    int32_t tmp_arr[SIZE*SIZE];
-    for (int i=0; i<SIZE*SIZE; i++) {
-        tmp_arr[i] = kMATRIX[i];
-    }
-    MPI_Bcast(tmp_arr, SIZE * SIZE, MPI_INT, 0, MPI_COMM_WORLD);
+
+    MPI_Bcast(kMATRIX, SIZE * SIZE, MPI_INT, 0, MPI_COMM_WORLD);
 
     if (SDK_Check_Breakdown(kMATRIX)) {
         if (is_master) {

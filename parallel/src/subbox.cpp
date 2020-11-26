@@ -1,12 +1,10 @@
 #include "subbox.h"
 
-#include <assert.h>
 #include <stdlib.h>
 
 #include "field.h"
 
-void SDK_Mark_Subbox_Availables(std::vector<int32_t>& mtx) {
-    assert(mtx.size() != 0);
+void SDK_Mark_Subbox_Availables(int32_t mtx[SIZE*SIZE]) {
 
     for (int32_t a = 0; a < SIZE_MULTIPLIER; ++a) {
         for (int32_t b = 0; b < SIZE_MULTIPLIER; ++b) {
