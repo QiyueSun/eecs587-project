@@ -47,12 +47,6 @@ int main(int argc, char *argv[]) {
     }
 
     if (comm_rank == 0) {
-        for (int i=0; i<SIZE; i++) {
-            for (int j=0; j<SIZE; j++) {
-                cout << kMATRIX[i * SIZE + j] << " ";
-            }
-            cout << endl;
-        }
         is_master = true;
         time_start = MPI_Wtime();
     }
@@ -60,6 +54,7 @@ int main(int argc, char *argv[]) {
 retry:
     if (comm_rank == 0) {
         SDK_Mark_Vertical_Availables(kMATRIX);
+        // SDK_Pretty_Print(kMATRIX);
 
         vector<int64_t> tmp(SIZE * SIZE, 0);
 
@@ -70,11 +65,17 @@ retry:
     }
     else if (comm_rank == 1) {
         SDK_Mark_Horizontal_Availables(kMATRIX);
+        // cout << "id = 1\n";
+        // SDK_Pretty_Print(kMATRIX);
+        // cout << "\n";
 
         MPI_Send(kMATRIX.data(), SIZE * SIZE, MPI_LONG, 0, 0, MPI_COMM_WORLD);
     }
     else if (comm_rank == 2) {
         SDK_Mark_Subbox_Availables(kMATRIX);
+        // cout << "id = 2\n";
+        // SDK_Pretty_Print(kMATRIX);
+        // cout << "\n";
 
         MPI_Send(kMATRIX.data(), SIZE * SIZE, MPI_LONG, 0, 0, MPI_COMM_WORLD);
     }

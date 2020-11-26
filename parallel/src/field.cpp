@@ -2,10 +2,11 @@
 #include "field.h"
 
 bool is_field_literal(int64_t field) {
-    if (field != 1 && ((field + 1) & field) == 0) 
+    if (field == 0)
         return false;
-    // assert((field & (field-1)) == 0);
-    return true;
+    if (((field - 1) & field) == 0) 
+        return true;
+    return false;
 }
 
 bool is_field_empty(int64_t field) {
