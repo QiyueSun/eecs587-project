@@ -5,7 +5,7 @@
 #include "field.h"
 
 
-void SDK_Mark_Horizontal_Availables(int32_t mtx[SIZE*SIZE]) {
+void SDK_Mark_Horizontal_Availables(int32_t mtx[]) {
     for (int32_t a = 0; a < SIZE; ++a) {
         int32_t result = 0;
         for (int32_t b = 0; b < SIZE; ++b) {

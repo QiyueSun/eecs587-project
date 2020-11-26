@@ -8,7 +8,7 @@
 
 using namespace std;
 
-void SDK_Import(string filepath, int32_t mtx[SIZE*SIZE]) {
+void SDK_Import(string filepath, int32_t mtx[]) {
     ifstream file;
     file.open(filepath);
     int row_idx = 0;
@@ -30,7 +30,7 @@ void SDK_Import(string filepath, int32_t mtx[SIZE*SIZE]) {
     file.close();
 }
 
-void SDK_Copy(int32_t src[SIZE*SIZE], int32_t dst[SIZE*SIZE]) {
+void SDK_Copy(int32_t src[], int32_t dst[]) {
   for (int32_t a = 0; a < SIZE; a++) {
     for (int32_t b = 0; b < SIZE; b++) {
       dst[a * SIZE + b] = src[a * SIZE + b];
@@ -38,7 +38,7 @@ void SDK_Copy(int32_t src[SIZE*SIZE], int32_t dst[SIZE*SIZE]) {
   }
 }
 
-void SDK_Print(int32_t mtx[SIZE][SIZE]) {
+void SDK_Print(int32_t mtx[]) {
   for (int32_t a = 0; a < SIZE; a++) {
     for (int32_t b = 0; b < SIZE; b++) {
       printf("%d ", mtx[a * SIZE + b]);
@@ -47,7 +47,7 @@ void SDK_Print(int32_t mtx[SIZE][SIZE]) {
   }
 }
 
-void SDK_Pretty_Print(int32_t mtx[SIZE][SIZE]) {
+void SDK_Pretty_Print(int32_t mtx[]) {
   for (int32_t a = 0; a < SIZE; a++) {
     for (int32_t b = 0; b < SIZE; b++) {
       printf("%d ", to_pretty(mtx[a * SIZE + b]));
@@ -56,7 +56,7 @@ void SDK_Pretty_Print(int32_t mtx[SIZE][SIZE]) {
   }
 }
 
-void SDK_Apply(int32_t dst[SIZE][SIZE], int32_t src[SIZE][SIZE]) {
+void SDK_Apply(int32_t dst[], int32_t src[]) {
   for (int32_t a = 0; a < SIZE; a++) {
     for (int32_t b = 0; b < SIZE; b++) {
       dst[a * SIZE + b] &= src[a * SIZE + b];

@@ -4,7 +4,7 @@
 
 #include "field.h"
 
-void SDK_Mark_Subbox_Availables(int32_t mtx[SIZE*SIZE]) {
+void SDK_Mark_Subbox_Availables(int32_t mtx[]) {
 
     for (int32_t a = 0; a < SIZE_MULTIPLIER; ++a) {
         for (int32_t b = 0; b < SIZE_MULTIPLIER; ++b) {

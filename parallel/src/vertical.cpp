@@ -5,7 +5,7 @@
 
 #include "field.h"
 
-void SDK_Mark_Vertical_Availables(int32_t mtx[SIZE*SIZE]) {
+void SDK_Mark_Vertical_Availables(int32_t mtx[]) {
     for (int32_t a = 0; a < SIZE; ++a) {
         //  Find used numbers
         int32_t result = 0;
