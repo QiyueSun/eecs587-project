@@ -53,11 +53,14 @@ int main(int argc, char *argv[]) {
         is_master = true;
         time_start = MPI_Wtime();
     }
-
+    int count = 0;
 retry:
     if (comm_rank == 0) {
+        int32_t old_kMATRIX[SIZE*SIZE];
+        for (int i=0; i<SIZE*SIZE; i++) {
+            old_kMATRIX[i] = kMATRIX[i];
+        }
         SDK_Mark_Vertical_Availables(kMATRIX);
-        // SDK_Pretty_Print(kMATRIX);
 
         int32_t tmp_arr[SIZE*SIZE];
 
@@ -65,6 +68,18 @@ retry:
         SDK_Apply(kMATRIX, tmp_arr);
         MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 2, 0, MPI_COMM_WORLD, NULL);
         SDK_Apply(kMATRIX, tmp_arr);
+        bool same = true;
+        for (int i=0; i<SIZE*SIZE; i++) {
+            if (old_kMATRIX[i] != kMATRIX[i]) {
+                same = false;
+            }
+        }
+        if (same) {
+            cout << endl;
+            cout << count << endl;
+            goto bailout;
+        }
+        count++;
     }
     else if (comm_rank == 1) {
         SDK_Mark_Horizontal_Availables(kMATRIX);
