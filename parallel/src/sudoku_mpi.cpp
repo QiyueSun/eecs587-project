@@ -56,6 +56,7 @@ int main(int argc, char *argv[]) {
     }
     int count = 0;
     bool change = true;
+    bool real_change = false;
 
 
 retry:
@@ -206,18 +207,17 @@ retry:
         goto bailout;
     }
     
-    bool real_change = false;
     for (int32_t a = 0; a < SIZE*SIZE; a++) {
-      if (old_kMATRIX[a] != kMATRIX[a]) {
-        real_change = true;
-        break;
-      }
+        if (old_kMATRIX[a] != kMATRIX[a]) {
+            real_change = true;
+            break;
+        }
     }
     if (!real_change) {
         if (comm_rank == 0) {
-      cout << "False change!" << endl;
+            cout << "False change!" << endl;
         }
-      goto bailout;
+        goto bailout;
     }
 
 
