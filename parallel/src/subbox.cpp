@@ -120,10 +120,10 @@ bool SDK_Mark_Subbox_Availables_Twins(int32_t mtx[], int start_box_idx, int end_
                 if (set_bits[possible_twins_idx[i]][0] == set_bits[possible_twins_idx[j]][0] &&
                     set_bits[possible_twins_idx[i]][1] == set_bits[possible_twins_idx[j]][1]) {
                     // remove other values
-                    int32_t c1 = possible_twins_idx[i] / SIZE_MULTIPLIER;
-                    int32_t d1 = possible_twins_idx[i] % SIZE_MULTIPLIER;
-                    int32_t c2 = possible_twins_idx[j] / SIZE_MULTIPLIER;
-                    int32_t d2 = possible_twins_idx[j] % SIZE_MULTIPLIER;
+                    int32_t c1 = set_bits[possible_twins_idx[i]][0] / SIZE_MULTIPLIER;
+                    int32_t d1 = set_bits[possible_twins_idx[i]][0] % SIZE_MULTIPLIER;
+                    int32_t c2 = set_bits[possible_twins_idx[i]][1] / SIZE_MULTIPLIER;
+                    int32_t d2 = set_bits[possible_twins_idx[i]][1] % SIZE_MULTIPLIER;
                     int32_t old_1 = mtx[((a * SIZE_MULTIPLIER) + c1) * SIZE + (b * SIZE_MULTIPLIER) + d1]; 
                     int32_t old_2 = mtx[((a * SIZE_MULTIPLIER) + c2) * SIZE + (b * SIZE_MULTIPLIER) + d2];
                     mtx[((a * SIZE_MULTIPLIER) + c1) * SIZE + (b * SIZE_MULTIPLIER) + d1] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]);
@@ -180,12 +180,12 @@ bool SDK_Mark_Subbox_Availables_Triplets(int32_t mtx[], int start_box_idx, int e
                         set_bits[possible_twins_idx[i]][2] == set_bits[possible_twins_idx[j]][2] &&
                         set_bits[possible_twins_idx[i]][2] == set_bits[possible_twins_idx[k]][2]) {
                         // remove other values
-                        int32_t c1 = possible_twins_idx[i] / SIZE_MULTIPLIER;
-                        int32_t d1 = possible_twins_idx[i] % SIZE_MULTIPLIER;
-                        int32_t c2 = possible_twins_idx[j] / SIZE_MULTIPLIER;
-                        int32_t d2 = possible_twins_idx[j] % SIZE_MULTIPLIER;
-                        int32_t c3 = possible_twins_idx[k] / SIZE_MULTIPLIER;
-                        int32_t d3 = possible_twins_idx[k] % SIZE_MULTIPLIER;
+                        int32_t c1 = set_bits[possible_twins_idx[i]][0] / SIZE_MULTIPLIER;
+                        int32_t d1 = set_bits[possible_twins_idx[i]][0] % SIZE_MULTIPLIER;
+                        int32_t c2 = set_bits[possible_twins_idx[i]][1] / SIZE_MULTIPLIER;
+                        int32_t d2 = set_bits[possible_twins_idx[i]][1] % SIZE_MULTIPLIER;
+                        int32_t c3 = set_bits[possible_twins_idx[i]][2] / SIZE_MULTIPLIER;
+                        int32_t d3 = set_bits[possible_twins_idx[i]][3] % SIZE_MULTIPLIER;
                         int32_t old_1 = mtx[((a * SIZE_MULTIPLIER) + c1) * SIZE + (b * SIZE_MULTIPLIER) + d1]; 
                         int32_t old_2 = mtx[((a * SIZE_MULTIPLIER) + c2) * SIZE + (b * SIZE_MULTIPLIER) + d2];
                         int32_t old_3 = mtx[((a * SIZE_MULTIPLIER) + c3) * SIZE + (b * SIZE_MULTIPLIER) + d3];

@@ -15,4 +15,4 @@
 # Run your program
 # (">" redirects the print output of your program,
 #  in this case to "mpi_demo_output.txt")
-mpirun -np 4 ./build/sudoku_mpi ../testcases/9x9_easy1.txt > output.txt
+mpirun -np 4 ./build/sudoku_mpi ../testcases/9x9_hard1.txt > output.txt
