@@ -97,7 +97,7 @@ bool SDK_Mark_Subbox_Availables_Twins(int32_t mtx[], int start_box_idx, int end_
                     while (field != 0 && count != SIZE) {
                         // check if the last bit is 1
                         if (field % 2 == 1) {
-                            set_bits[count].push_back(c * SIZE + d);
+                            set_bits[count].push_back(c * SIZE_MULTIPLIER + d);
                         }
                         count++;
                         field = field >> 1;
@@ -152,7 +152,7 @@ bool SDK_Mark_Subbox_Availables_Triplets(int32_t mtx[], int start_box_idx, int e
                     while (field != 0 && count != SIZE) {
                         // check if the last bit is 1
                         if (field % 2 == 1) {
-                            set_bits[count].push_back(c * SIZE + d);
+                            set_bits[count].push_back(c * SIZE_MULTIPLIER + d);
                         }
                         count++;
                         field = field >> 1;
