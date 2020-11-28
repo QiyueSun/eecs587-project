@@ -91,14 +91,20 @@ bool SDK_Mark_Horizontal_Availables_Twins(int32_t mtx[], int start_row, int end_
                 possible_twins_idx.push_back(i);
             }
         }
+        if (possible_twins_idx.empty()) {
+          continue;
+        }
         for (int i=0; i<possible_twins_idx.size()-1; i++) {
             for (int j=i+1; j<possible_twins_idx.size(); j++) {
                 if (set_bits[possible_twins_idx[i]][0] == set_bits[possible_twins_idx[j]][0] &&
                     set_bits[possible_twins_idx[i]][1] == set_bits[possible_twins_idx[j]][1]) {
                     // remove other values
+                    int32_t old_1 = mtx[a * SIZE + set_bits[possible_twins_idx[i]][0]];
+                    int32_t old_2 = mtx[a * SIZE + set_bits[possible_twins_idx[i]][1]];
                     mtx[a * SIZE + set_bits[possible_twins_idx[i]][0]] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]);
                     mtx[a * SIZE + set_bits[possible_twins_idx[i]][1]] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]);
-                    change = true;
+                    change = (old_1 != mtx[a * SIZE + set_bits[possible_twins_idx[i]][0]]) ||
+                             (old_2 != mtx[a * SIZE + set_bits[possible_twins_idx[i]][1]]);
                     break;
                 }
             }
