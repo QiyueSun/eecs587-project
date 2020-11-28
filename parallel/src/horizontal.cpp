@@ -6,7 +6,8 @@
 #include "field.h"
 
 
-void SDK_Mark_Horizontal_Availables(int32_t mtx[], int start_row, int end_row) {
+bool SDK_Mark_Horizontal_Availables(int32_t mtx[], int start_row, int end_row) {
+    bool change = false;
     for (int32_t a = start_row; a < end_row; ++a) {
         int32_t result = 0;
         for (int32_t b = 0; b < SIZE; ++b) {
@@ -21,11 +22,14 @@ void SDK_Mark_Horizontal_Availables(int32_t mtx[], int start_row, int end_row) {
         int32_t unused_numbers = result ^ 0b111111111;
         for (int32_t b = 0; b < SIZE; ++b) {
             if (!is_field_literal(mtx[a * SIZE + b])) {
+                int32_t old = mtx[a * SIZE + b];
                 mtx[a * SIZE + b] &= unused_numbers;
+                change |= (old != mtx[a * SIZE + b]);
                 assert(mtx[a * SIZE + b] != 0);
             }
         }
     }
+    return change;
 }
 
 
@@ -103,7 +107,7 @@ bool SDK_Mark_Horizontal_Availables_Twins(int32_t mtx[], int start_row, int end_
                     int32_t old_2 = mtx[a * SIZE + set_bits[possible_twins_idx[i]][1]];
                     mtx[a * SIZE + set_bits[possible_twins_idx[i]][0]] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]);
                     mtx[a * SIZE + set_bits[possible_twins_idx[i]][1]] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]);
-                    change = (old_1 != mtx[a * SIZE + set_bits[possible_twins_idx[i]][0]]) ||
+                    change |= (old_1 != mtx[a * SIZE + set_bits[possible_twins_idx[i]][0]]) ||
                              (old_2 != mtx[a * SIZE + set_bits[possible_twins_idx[i]][1]]);
                     break;
                 }

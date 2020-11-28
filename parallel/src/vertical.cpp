@@ -6,7 +6,8 @@
 
 #include "field.h"
 
-void SDK_Mark_Vertical_Availables(int32_t mtx[], int start_col, int end_col) {
+bool SDK_Mark_Vertical_Availables(int32_t mtx[], int start_col, int end_col) {
+    bool change = false;
     for (int32_t a = start_col; a < end_col; ++a) {
         //  Find used numbers
         int32_t result = 0;
@@ -21,11 +22,14 @@ void SDK_Mark_Vertical_Availables(int32_t mtx[], int start_col, int end_col) {
         int32_t unused_numbers = result ^ 0b111111111;
         for (int32_t b = 0; b < SIZE; ++b) {
             if (!is_field_literal(mtx[b * SIZE + a])) {
+                int32_t old = mtx[b * SIZE + a];
                 mtx[b * SIZE + a] &= unused_numbers;
+                change |= (old != mtx[b * SIZE + a]);
                 assert(mtx[b * SIZE + a] != 0);
             }
         }
     }
+    return change;
 }
 
 bool SDK_Mark_Vertical_Availables_Long_Ranger(int32_t mtx[], int start_col, int end_col) {
@@ -103,7 +107,7 @@ bool SDK_Mark_Vertical_Availables_Twins(int32_t mtx[], int start_col, int end_co
                     int32_t old_2 = mtx[set_bits[possible_twins_idx[i]][1] * SIZE + a];
                     mtx[set_bits[possible_twins_idx[i]][0] * SIZE + a] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]);
                     mtx[set_bits[possible_twins_idx[i]][1] * SIZE + a] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]);
-                    change = (old_1 != mtx[set_bits[possible_twins_idx[i]][0] * SIZE + a]) ||
+                    change |= (old_1 != mtx[set_bits[possible_twins_idx[i]][0] * SIZE + a]) ||
                              (old_2 != mtx[set_bits[possible_twins_idx[i]][1] * SIZE + a]);
                     break;
                 }
