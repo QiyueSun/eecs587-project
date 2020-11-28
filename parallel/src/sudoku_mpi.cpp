@@ -86,13 +86,13 @@ retry:
     else if (comm_size < 12) {
         switch (comm_rank) {
             case 0: {
-                SDK_Mark_Vertical_Availables(kMATRIX, 0, SIZE);
+                change = SDK_Mark_Vertical_Availables(kMATRIX, 0, SIZE);
                 int32_t tmp_arr[SIZE*SIZE];
                 MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 1, 0, MPI_COMM_WORLD, NULL);
                 bool change_1 = SDK_Apply(kMATRIX, tmp_arr);
                 MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 2, 0, MPI_COMM_WORLD, NULL);
                 bool change_2 = SDK_Apply(kMATRIX, tmp_arr);
-                change = (change_1 || change_2);
+                change |= (change_1 || change_2);
                 break;
             }
             case 1: {
@@ -145,13 +145,14 @@ retry:
     // long ranger
     if (!change) {
         if (comm_rank == 0) {
-            SDK_Mark_Vertical_Availables_Long_Ranger(kMATRIX, 0, SIZE);
+            change = SDK_Mark_Vertical_Availables_Long_Ranger(kMATRIX, 0, SIZE);
+            cout << "SDK_Mark_Vertical_Availables_Long_Ranger" << endl;
             int32_t tmp_arr[SIZE*SIZE];
             MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 1, 0, MPI_COMM_WORLD, NULL);
             bool change_1 = SDK_Apply(kMATRIX, tmp_arr);
             MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 2, 0, MPI_COMM_WORLD, NULL);
             bool change_2 = SDK_Apply(kMATRIX, tmp_arr);
-            change = change_1 || change_2;
+            change |= change_1 || change_2;
         }
         else if (comm_rank == 1) {
             SDK_Mark_Horizontal_Availables_Long_Ranger(kMATRIX, 0, SIZE);
@@ -170,14 +171,14 @@ retry:
         // twin
         if (!change) {
             if (comm_rank == 0) {
-                SDK_Mark_Vertical_Availables_Twins(kMATRIX, 0, SIZE);
+                change = SDK_Mark_Vertical_Availables_Twins(kMATRIX, 0, SIZE);
                 cout << "SDK_Mark_Vertical_Availables_Twins" << endl;
                 int32_t tmp_arr[SIZE*SIZE];
                 MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 1, 0, MPI_COMM_WORLD, NULL);
                 bool change_1 = SDK_Apply(kMATRIX, tmp_arr);
                 MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 2, 0, MPI_COMM_WORLD, NULL);
                 bool change_2 = SDK_Apply(kMATRIX, tmp_arr);
-                change = change_1 || change_2;
+                change |= change_1 || change_2;
             }
             else if (comm_rank == 1) {
                 SDK_Mark_Horizontal_Availables_Twins(kMATRIX, 0, SIZE);
