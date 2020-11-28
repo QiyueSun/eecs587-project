@@ -6,8 +6,8 @@
 
 #include "field.h"
 
-void SDK_Mark_Vertical_Availables(int32_t mtx[]) {
-    for (int32_t a = 0; a < SIZE; ++a) {
+void SDK_Mark_Vertical_Availables(int32_t mtx[], int start_col, int end_col) {
+    for (int32_t a = start_col; a < end_col; ++a) {
         //  Find used numbers
         int32_t result = 0;
         for (int32_t b = 0; b < SIZE; ++b) {

@@ -3,6 +3,6 @@
 
 #include "defs.h"
 
-void SDK_Mark_Horizontal_Availables(int32_t mtx[]);
+void SDK_Mark_Horizontal_Availables(int32_t mtx[], int start_row, int end_row);
 
 #endif

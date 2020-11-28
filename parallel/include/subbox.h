@@ -3,6 +3,6 @@
 
 #include "defs.h"
 
-void SDK_Mark_Subbox_Availables(int32_t mtx[]);
+void SDK_Mark_Subbox_Availables(int32_t mtx[], int start_box_idx, int end_box_idx);
 
 #endif

@@ -58,32 +58,85 @@ int main(int argc, char *argv[]) {
 
 
 retry:
-    if (comm_rank == 0) {
-        SDK_Mark_Vertical_Availables(kMATRIX);
+    if (comm_size < 6) {
+        if (comm_rank == 0) {
+            SDK_Mark_Vertical_Availables(kMATRIX, 0, SIZE);
 
-        int32_t tmp_arr[SIZE*SIZE];
-        MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 1, 0, MPI_COMM_WORLD, NULL);
-        bool change_hor = SDK_Apply(kMATRIX, tmp_arr);
-        MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 2, 0, MPI_COMM_WORLD, NULL);
-        bool change_sub = SDK_Apply(kMATRIX, tmp_arr);
-        if (!change_hor && !change_sub) {
-            // look for long range
-            SDK_Mark_Vertical_Availables_Long_Ranger(kMATRIX);
+            int32_t tmp_arr[SIZE*SIZE];
+            MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 1, 0, MPI_COMM_WORLD, NULL);
+            bool change_hor = SDK_Apply(kMATRIX, tmp_arr);
+            MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 2, 0, MPI_COMM_WORLD, NULL);
+            bool change_sub = SDK_Apply(kMATRIX, tmp_arr);
+            if (!change_hor && !change_sub) {
+                // look for long range
+                SDK_Mark_Vertical_Availables_Long_Ranger(kMATRIX);
+            }
+            count++;
         }
-        count++;
-    }
-    else if (comm_rank == 1) {
-        SDK_Mark_Horizontal_Availables(kMATRIX);
+        else if (comm_rank == 1) {
+            SDK_Mark_Horizontal_Availables(kMATRIX, 0, SIZE);
 
-        MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
-    }
-    else if (comm_rank == 2) {
-        SDK_Mark_Subbox_Availables(kMATRIX);
+            MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
+        }
+        else if (comm_rank == 2) {
+            SDK_Mark_Subbox_Availables(kMATRIX, 0, SIZE);
 
-        MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
+            MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
+        }
+        else {
+            goto bailout;
+        }
     }
-    else {
-        goto bailout;
+    else if (comm_size < 12) {
+        switch (comm_rank) {
+            case 0:
+                SDK_Mark_Vertical_Availables(kMATRIX, 0, SIZE);
+                int32_t tmp_arr[SIZE*SIZE];
+                MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 1, 0, MPI_COMM_WORLD, NULL);
+                bool change_1 = SDK_Apply(kMATRIX, tmp_arr);
+                MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 2, 0, MPI_COMM_WORLD, NULL);
+                bool change_2 = SDK_Apply(kMATRIX, tmp_arr);
+                if (!change_1 && !change_2) {
+                    SDK_Mark_Vertical_Availables_Long_Ranger(kMATRIX);
+                }
+                break;
+            case 1:
+                SDK_Mark_Horizontal_Availables(kMATRIX, 0, SIZE/2+1);
+                int32_t tmp_arr[SIZE*SIZE];
+                MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 3, 0, MPI_COMM_WORLD, NULL);
+                bool change_3 = SDK_Apply(kMATRIX, tmp_arr);
+                MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 4, 0, MPI_COMM_WORLD, NULL);
+                bool change_4 = SDK_Apply(kMATRIX, tmp_arr);
+                MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
+                break;
+            case 2:
+                SDK_Mark_Subbox_Availables(kMATRIX, 0, SIZE/2+1);
+                int32_t tmp_arr[SIZE*SIZE];
+                MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 5, 0, MPI_COMM_WORLD, NULL);
+                bool change_5 = SDK_Apply(kMATRIX, tmp_arr);
+                MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 6, 0, MPI_COMM_WORLD, NULL);
+                bool change_6 = SDK_Apply(kMATRIX, tmp_arr);
+                MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
+                break;
+            case 3:
+                SDK_Mark_Horizontal_Availables(kMATRIX, SIZE/2+1, SIZE*3/4+1);
+                MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 1, 0, MPI_COMM_WORLD);
+                break;
+            case 4:
+                SDK_Mark_Horizontal_Availables(kMATRIX, SIZE*3/4+1, SIZE);
+                MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 1, 0, MPI_COMM_WORLD);
+                break;
+            case 5:
+                SDK_Mark_Subbox_Availables(kMATRIX, 0, SIZE/2+1);
+                MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 2, 0, MPI_COMM_WORLD);
+                break;
+            case 6:
+                SDK_Mark_Subbox_Availables(kMATRIX, 0, SIZE/2+1);
+                MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 2, 0, MPI_COMM_WORLD);
+                break;
+            default:
+                goto bailout;
+        }
     }
 
     MPI_Bcast(kMATRIX, SIZE * SIZE, MPI_INT, 0, MPI_COMM_WORLD);
