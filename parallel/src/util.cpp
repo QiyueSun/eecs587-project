@@ -56,10 +56,19 @@ void SDK_Pretty_Print(int32_t mtx[]) {
   }
 }
 
-void SDK_Apply(int32_t dst[], int32_t src[]) {
+/*
+  return change or not
+*/
+bool SDK_Apply(int32_t dst[], int32_t src[]) {
+  bool change = false;
   for (int32_t a = 0; a < SIZE; a++) {
     for (int32_t b = 0; b < SIZE; b++) {
+      int32_t old = dst[a * SIZE + b];
       dst[a * SIZE + b] &= src[a * SIZE + b];
+      if (dst[a * SIZE + b] != old) {
+        change = true;
+      }
     }
   }
+  return change;
 }

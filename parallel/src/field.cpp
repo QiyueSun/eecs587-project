@@ -14,6 +14,10 @@
 // }
 
 // int32_t to_pretty(int32_t field) {
+//   if (!is_field_literal(field)) {
+//     return 0;
+//   }
+//   if (field == 1) return 1;
 //     int32_t result = 0;
 //     if (((field + 1) & field) == 0) 
 //         return 0;

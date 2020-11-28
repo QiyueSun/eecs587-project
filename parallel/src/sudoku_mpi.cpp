@@ -16,6 +16,7 @@
 #include <mpi.h>
 
 #include "defs.h"
+#include "field.h"
 #include "util.h"
 #include "vertical.h"
 #include "horizontal.h"
@@ -54,46 +55,30 @@ int main(int argc, char *argv[]) {
         time_start = MPI_Wtime();
     }
     int count = 0;
+
+
 retry:
     if (comm_rank == 0) {
-        int32_t old_kMATRIX[SIZE*SIZE];
-        for (int i=0; i<SIZE*SIZE; i++) {
-            old_kMATRIX[i] = kMATRIX[i];
-        }
         SDK_Mark_Vertical_Availables(kMATRIX);
 
         int32_t tmp_arr[SIZE*SIZE];
-
         MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 1, 0, MPI_COMM_WORLD, NULL);
-        SDK_Apply(kMATRIX, tmp_arr);
+        bool change_hor = SDK_Apply(kMATRIX, tmp_arr);
         MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 2, 0, MPI_COMM_WORLD, NULL);
-        SDK_Apply(kMATRIX, tmp_arr);
-        bool same = true;
-        for (int i=0; i<SIZE*SIZE; i++) {
-            if (old_kMATRIX[i] != kMATRIX[i]) {
-                same = false;
-            }
-        }
-        if (same) {
-            cout << endl;
-            cout << count << endl;
-            goto bailout;
+        bool change_sub = SDK_Apply(kMATRIX, tmp_arr);
+        if (!change_hor && !change_sub) {
+            // look for long range
+            SDK_Mark_Vertical_Availables_Long_Ranger(kMATRIX);
         }
         count++;
     }
     else if (comm_rank == 1) {
         SDK_Mark_Horizontal_Availables(kMATRIX);
-        // cout << "id = 1\n";
-        // SDK_Pretty_Print(kMATRIX);
-        // cout << "\n";
 
         MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
     }
     else if (comm_rank == 2) {
         SDK_Mark_Subbox_Availables(kMATRIX);
-        // cout << "id = 2\n";
-        // SDK_Pretty_Print(kMATRIX);
-        // cout << "\n";
 
         MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
     }
