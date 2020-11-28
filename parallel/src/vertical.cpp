@@ -28,9 +28,9 @@ void SDK_Mark_Vertical_Availables(int32_t mtx[], int start_col, int end_col) {
     }
 }
 
-bool SDK_Mark_Vertical_Availables_Long_Ranger(int32_t mtx[]) {
+bool SDK_Mark_Vertical_Availables_Long_Ranger(int32_t mtx[], int start_col, int end_col) {
     bool change = false;
-    for (int32_t a = 0; a < SIZE; ++a) {
+    for (int32_t a = start_col; a < end_col; ++a) {
         int32_t result = 0;
         std::vector<int> set_bits(SIZE, 0);
         for (int32_t b = 0; b < SIZE; ++b) {
