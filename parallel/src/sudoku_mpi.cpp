@@ -141,7 +141,7 @@ retry:
     }
 
     MPI_Bcast(kMATRIX, SIZE * SIZE, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(change, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&change, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
 
     // long ranger
     if (!change) {
@@ -168,7 +168,7 @@ retry:
         }
 
         MPI_Bcast(kMATRIX, SIZE * SIZE, MPI_INT, 0, MPI_COMM_WORLD);
-        MPI_Bcast(change, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&change, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
 
         // twin
         if (!change) {
@@ -195,7 +195,7 @@ retry:
             }
 
             MPI_Bcast(kMATRIX, SIZE * SIZE, MPI_INT, 0, MPI_COMM_WORLD);
-            MPI_Bcast(change, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+            MPI_Bcast(&change, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
 
             if (!change) {
                 if (comm_rank == 0) {
