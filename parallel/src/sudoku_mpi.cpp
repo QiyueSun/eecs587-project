@@ -61,14 +61,14 @@ int main(int argc, char *argv[]) {
 retry:
     if (comm_size < 6) {
         if (comm_rank == 0) {
-            SDK_Mark_Vertical_Availables(kMATRIX, 0, SIZE);
+            change = SDK_Mark_Vertical_Availables(kMATRIX, 0, SIZE);
 
             int32_t tmp_arr[SIZE*SIZE];
             MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 1, 0, MPI_COMM_WORLD, NULL);
             bool change_hor = SDK_Apply(kMATRIX, tmp_arr);
             MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 2, 0, MPI_COMM_WORLD, NULL);
             bool change_sub = SDK_Apply(kMATRIX, tmp_arr);
-            change = change_hor || change_sub;
+            change = change || change_hor || change_sub;
             count++;
         }
         else if (comm_rank == 1) {
@@ -92,7 +92,7 @@ retry:
                 bool change_1 = SDK_Apply(kMATRIX, tmp_arr);
                 MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 2, 0, MPI_COMM_WORLD, NULL);
                 bool change_2 = SDK_Apply(kMATRIX, tmp_arr);
-                change |= (change_1 || change_2);
+                change = change || change_1 || change_2;
                 break;
             }
             case 1: {
@@ -152,7 +152,7 @@ retry:
             bool change_1 = SDK_Apply(kMATRIX, tmp_arr);
             MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 2, 0, MPI_COMM_WORLD, NULL);
             bool change_2 = SDK_Apply(kMATRIX, tmp_arr);
-            change |= change_1 || change_2;
+            change = change || change_1 || change_2;
         }
         else if (comm_rank == 1) {
             SDK_Mark_Horizontal_Availables_Long_Ranger(kMATRIX, 0, SIZE);
@@ -178,7 +178,7 @@ retry:
                 bool change_1 = SDK_Apply(kMATRIX, tmp_arr);
                 MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 2, 0, MPI_COMM_WORLD, NULL);
                 bool change_2 = SDK_Apply(kMATRIX, tmp_arr);
-                change |= change_1 || change_2;
+                change = change || change_1 || change_2;
             }
             else if (comm_rank == 1) {
                 SDK_Mark_Horizontal_Availables_Twins(kMATRIX, 0, SIZE);
