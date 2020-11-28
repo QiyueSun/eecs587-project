@@ -169,7 +169,7 @@ retry:
     // twin
     if (!change) {
         if (comm_rank == 0) {
-            SDK_Mark_Vertical_Availables_Twins(mtx, 0, SIZE);
+            SDK_Mark_Vertical_Availables_Twins(kMATRIX, 0, SIZE);
             int32_t tmp_arr[SIZE*SIZE];
             MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 1, 0, MPI_COMM_WORLD, NULL);
             bool change_1 = SDK_Apply(kMATRIX, tmp_arr);
@@ -178,11 +178,11 @@ retry:
             change = change_1 || change_2;
         }
         else if (comm_rank == 1) {
-            SDK_Mark_Horizontal_Availables_Twins(mtx, 0, SIZE);
+            SDK_Mark_Horizontal_Availables_Twins(kMATRIX, 0, SIZE);
             MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
         }
         else if (comm_rank == 2) {
-            SDK_Mark_Subbox_Availables_Twins(mtx, 0, SIZE);
+            SDK_Mark_Subbox_Availables_Twins(kMATRIX, 0, SIZE);
             MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
         }
         else {
