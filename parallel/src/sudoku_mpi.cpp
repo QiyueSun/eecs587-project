@@ -56,7 +56,6 @@ int main(int argc, char *argv[]) {
     }
     int count = 0;
     bool change = true;
-    bool real_change = false;
 
 
 retry:
@@ -178,6 +177,7 @@ retry:
     if (!change) {
         if (comm_rank == 0) {
             SDK_Mark_Vertical_Availables_Twins(kMATRIX, 0, SIZE);
+            cout << "SDK_Mark_Vertical_Availables_Twins" << endl;
             int32_t tmp_arr[SIZE*SIZE];
             MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 1, 0, MPI_COMM_WORLD, NULL);
             bool change_1 = SDK_Apply(kMATRIX, tmp_arr);
@@ -202,20 +202,7 @@ retry:
 
     if (!change) {
         if (comm_rank == 0) {
-            cout << "Need triple\n";
-        }
-        goto bailout;
-    }
-    
-    for (int32_t a = 0; a < SIZE*SIZE; a++) {
-        if (old_kMATRIX[a] != kMATRIX[a]) {
-            real_change = true;
-            break;
-        }
-    }
-    if (!real_change) {
-        if (comm_rank == 0) {
-            cout << "False change!" << endl;
+            cout << "Need triple" << endl;
         }
         goto bailout;
     }
