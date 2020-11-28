@@ -166,7 +166,14 @@ retry:
         }
     }
 
+    MPI_Bcast(kMATRIX, SIZE * SIZE, MPI_INT, 0, MPI_COMM_WORLD);
+
     // twin
+    int32_t old_kMATRIX[SIZE*SIZE];
+    for (int i=0; i<SIZE*SIZE; i++) {
+      old_kMATRIX[i] = kMATRIX[i];
+    }
+
     if (!change) {
         if (comm_rank == 0) {
             SDK_Mark_Vertical_Availables_Twins(kMATRIX, 0, SIZE);
@@ -190,12 +197,29 @@ retry:
         }
     }
 
+    MPI_Bcast(kMATRIX, SIZE * SIZE, MPI_INT, 0, MPI_COMM_WORLD);
+
     if (!change) {
         if (comm_rank == 0) {
             cout << "Need triple\n";
         }
         goto bailout;
     }
+    
+    bool real_change = false;
+    for (int32_t a = 0; a < SIZE*SIZE; a++) {
+      if (old_kMATRIX[a] != kMATRIX[a]) {
+        real_change = true;
+        break;
+      }
+    }
+    if (!real_change) {
+        if (comm_rank == 0) {
+      cout << "False change!" << endl;
+        }
+      goto bailout;
+    }
+
 
     if (SDK_Check_Breakdown(kMATRIX)) {
         if (is_master) {
