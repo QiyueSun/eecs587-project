@@ -22,7 +22,7 @@ bool SDK_Mark_Subbox_Availables(int32_t mtx[], int start_box_idx, int end_box_id
         }
 
         //  Insert unused numbers to empty fields
-        int32_t unused_numbers = result ^ 0b111111111;
+        int32_t unused_numbers = result ^ ((1 << SIZE) - 1);
         for (int32_t c = 0; c < SIZE_MULTIPLIER; ++c) {
             for (int32_t d = 0; d < SIZE_MULTIPLIER; ++d) {
                 if (!is_field_literal(mtx[((a * SIZE_MULTIPLIER) + c) * SIZE + (b * SIZE_MULTIPLIER) + d])) {

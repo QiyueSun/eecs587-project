@@ -19,7 +19,7 @@ bool SDK_Mark_Vertical_Availables(int32_t mtx[], int start_col, int end_col) {
         }
 
         //  Insert unused numbers to empty fields
-        int32_t unused_numbers = result ^ 0b111111111;
+        int32_t unused_numbers = result ^ ((1 << SIZE) - 1);
         for (int32_t b = 0; b < SIZE; ++b) {
             if (!is_field_literal(mtx[b * SIZE + a])) {
                 int32_t old = mtx[b * SIZE + a];
