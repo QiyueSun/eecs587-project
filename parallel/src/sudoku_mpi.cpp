@@ -68,7 +68,7 @@ retry:
             bool change_hor = SDK_Apply(kMATRIX, tmp_arr);
             MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 2, 0, MPI_COMM_WORLD, NULL);
             bool change_sub = SDK_Apply(kMATRIX, tmp_arr);
-            change = (!change_hor && !change_sub);
+            change = change_hor || change_sub;
             count++;
         }
         else if (comm_rank == 1) {
@@ -92,7 +92,7 @@ retry:
                 bool change_1 = SDK_Apply(kMATRIX, tmp_arr);
                 MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 2, 0, MPI_COMM_WORLD, NULL);
                 bool change_2 = SDK_Apply(kMATRIX, tmp_arr);
-                change = (!change_1 && !change_2);
+                change = (change_1 || change_2);
                 break;
             }
             case 1: {
