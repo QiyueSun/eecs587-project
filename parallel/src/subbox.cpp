@@ -110,19 +110,20 @@ bool SDK_Mark_Subbox_Availables_Twins(int32_t mtx[], int start_box_idx, int end_
         }
         for (int i=0; i<possible_twins_idx.size()-1; i++) {
             for (int j=i+1; j<possible_twins_idx.size(); j++) {
-            if (set_bits[possible_twins_idx[i]][0] == set_bits[possible_twins_idx[j]][0] &&
-                set_bits[possible_twins_idx[i]][1] == set_bits[possible_twins_idx[j]][1]) {
-                // remove other values
-                int32_t c1 = possible_twins_idx[i] / SIZE_MULTIPLIER;
-                int32_t d1 = possible_twins_idx[i] % SIZE_MULTIPLIER;
-                int32_t c2 = possible_twins_idx[j] / SIZE_MULTIPLIER;
-                int32_t d2 = possible_twins_idx[j] % SIZE_MULTIPLIER;
-                mtx[((a * SIZE_MULTIPLIER) + c1) * SIZE + (b * SIZE_MULTIPLIER) + d1] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]);
-                mtx[((a * SIZE_MULTIPLIER) + c2) * SIZE + (b * SIZE_MULTIPLIER) + d2] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]);
-                // mtx[a * SIZE + set_bits[possible_twins_idx[i]][0]] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]);
-                // mtx[a * SIZE + set_bits[possible_twins_idx[i]][1]] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]);
-                change = true;
-                break;
+                if (set_bits[possible_twins_idx[i]][0] == set_bits[possible_twins_idx[j]][0] &&
+                    set_bits[possible_twins_idx[i]][1] == set_bits[possible_twins_idx[j]][1]) {
+                    // remove other values
+                    int32_t c1 = possible_twins_idx[i] / SIZE_MULTIPLIER;
+                    int32_t d1 = possible_twins_idx[i] % SIZE_MULTIPLIER;
+                    int32_t c2 = possible_twins_idx[j] / SIZE_MULTIPLIER;
+                    int32_t d2 = possible_twins_idx[j] % SIZE_MULTIPLIER;
+                    mtx[((a * SIZE_MULTIPLIER) + c1) * SIZE + (b * SIZE_MULTIPLIER) + d1] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]);
+                    mtx[((a * SIZE_MULTIPLIER) + c2) * SIZE + (b * SIZE_MULTIPLIER) + d2] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]);
+                    // mtx[a * SIZE + set_bits[possible_twins_idx[i]][0]] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]);
+                    // mtx[a * SIZE + set_bits[possible_twins_idx[i]][1]] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]);
+                    change = true;
+                    break;
+                }
             }
         }
     }

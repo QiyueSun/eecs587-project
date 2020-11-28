@@ -93,13 +93,14 @@ bool SDK_Mark_Vertical_Availables_Twins(int32_t mtx[], int start_col, int end_co
         }
         for (int i=0; i<possible_twins_idx.size()-1; i++) {
             for (int j=i+1; j<possible_twins_idx.size(); j++) {
-            if (set_bits[possible_twins_idx[i]][0] == set_bits[possible_twins_idx[j]][0] &&
-                set_bits[possible_twins_idx[i]][1] == set_bits[possible_twins_idx[j]][1]) {
-                // remove other values
-                mtx[set_bits[possible_twins_idx[i]][0] * SIZE + a] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]);
-                mtx[set_bits[possible_twins_idx[i]][1] * SIZE + a] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]);
-                change = true;
-                break;
+                if (set_bits[possible_twins_idx[i]][0] == set_bits[possible_twins_idx[j]][0] &&
+                    set_bits[possible_twins_idx[i]][1] == set_bits[possible_twins_idx[j]][1]) {
+                    // remove other values
+                    mtx[set_bits[possible_twins_idx[i]][0] * SIZE + a] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]);
+                    mtx[set_bits[possible_twins_idx[i]][1] * SIZE + a] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]);
+                    change = true;
+                    break;
+                }
             }
         }
     }
