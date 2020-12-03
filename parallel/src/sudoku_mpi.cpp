@@ -14,6 +14,8 @@
 #include <unordered_set>
 #include <math.h>
 #include <mpi.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "defs.h"
 #include "field.h"

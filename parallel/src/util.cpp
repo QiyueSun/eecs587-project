@@ -196,9 +196,10 @@ bool is_conflict(int32_t sudoku[]) {
                     // cout << "conflict at row " << i << endl;
                     return true;
                 }
-                else
+                else {
                     exist[to_pretty(sudoku[i * SIZE + j])-1] = true;
                     nonexist--;
+                }
             }
             else {
                 nonliteral++;
