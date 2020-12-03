@@ -76,9 +76,9 @@ int main(int argc, char *argv[]) {
                 bool assert_fail1 = false;
                 bool assert_fail2 = false;
                 MPI_Recv(tmp_arr1, SIZE * SIZE, MPI_INT, 1, 0, MPI_COMM_WORLD, NULL);
-                MPI_Recv(assert_fail1, 1, MPI_C_BOOL, 1, 0, MPI_COMM_WORLD, NULL);
+                MPI_Recv(&assert_fail1, 1, MPI_C_BOOL, 1, 0, MPI_COMM_WORLD, NULL);
                 MPI_Recv(tmp_arr2, SIZE * SIZE, MPI_INT, 2, 0, MPI_COMM_WORLD, NULL);
-                MPI_Recv(assert_fail2, 1, MPI_C_BOOL, 2, 0, MPI_COMM_WORLD, NULL);
+                MPI_Recv(&assert_fail2, 1, MPI_C_BOOL, 2, 0, MPI_COMM_WORLD, NULL);
                 assert_fail |= assert_fail1 || assert_fail2;
                 change |= SDK_Apply(kMATRIX, tmp_arr1) || SDK_Apply(kMATRIX, tmp_arr2);
                 count++;
@@ -86,12 +86,12 @@ int main(int argc, char *argv[]) {
             else if (comm_rank == 1) {
                 SDK_Mark_Horizontal_Availables(kMATRIX, assert_fail, 0, SIZE);
                 MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
-                MPI_Send(assert_fail, 1, MPI_C_BOOL, 0, 0, MPI_COMM_WORLD);
+                MPI_Send(&assert_fail, 1, MPI_C_BOOL, 0, 0, MPI_COMM_WORLD);
             }
             else if (comm_rank == 2) {
                 SDK_Mark_Subbox_Availables(kMATRIX, assert_fail, 0, SIZE);
                 MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
-                MPI_Send(assert_fail, 1, MPI_C_BOOL, 0, 0, MPI_COMM_WORLD);
+                MPI_Send(&assert_fail, 1, MPI_C_BOOL, 0, 0, MPI_COMM_WORLD);
             }
             else {
                 break;
@@ -200,20 +200,20 @@ int main(int argc, char *argv[]) {
         if (comm_rank == 0) {
             if (stack.empty()) {
                 finish = true;
-                MPI_Send(finish, 1, MPI_C_BOOL, 1, 0, MPI_COMM_WORLD);
-                MPI_Send(finish, 1, MPI_C_BOOL, 2, 0, MPI_COMM_WORLD);
+                MPI_Send(&finish, 1, MPI_C_BOOL, 1, 0, MPI_COMM_WORLD);
+                MPI_Send(&finish, 1, MPI_C_BOOL, 2, 0, MPI_COMM_WORLD);
                 break;
             }
             else {
-                MPI_Send(finish, 1, MPI_C_BOOL, 1, 0, MPI_COMM_WORLD);
-                MPI_Send(finish, 1, MPI_C_BOOL, 2, 0, MPI_COMM_WORLD);
+                MPI_Send(&finish, 1, MPI_C_BOOL, 1, 0, MPI_COMM_WORLD);
+                MPI_Send(&finish, 1, MPI_C_BOOL, 2, 0, MPI_COMM_WORLD);
                 tmp = stack.back(); stack.pop_back();
                 memcpy(kMATRIX, tmp, SIZE*SIZE*sizeof(int32_t));
                 delete []tmp;
             }
         }
         else {
-            MPI_Recv(finish, 1, MPI_C_BOOL, 0, 0, MPI_COMM_WORLD, NULL);
+            MPI_Recv(&finish, 1, MPI_C_BOOL, 0, 0, MPI_COMM_WORLD, NULL);
             if (finish) break;
         }
         MPI_Bcast(kMATRIX, SIZE * SIZE, MPI_INT, 0, MPI_COMM_WORLD);
