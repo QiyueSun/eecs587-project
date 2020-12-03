@@ -4,6 +4,8 @@
 #include <string>
 #include <fstream>
 #include <iostream>
+#include <string.h>
+#include <bitset>
 
 #include "field.h"
 

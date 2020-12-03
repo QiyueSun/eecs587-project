@@ -3,6 +3,7 @@
 
 #include "defs.h"
 #include <string>
+#include <vector>
 
 
 void SDK_Import(std::string filepath, int32_t mtx[]);
