@@ -57,209 +57,168 @@ int main(int argc, char *argv[]) {
     int count = 0;
     bool change = true;
     bool assert_fail = false;
-
-
-retry:
-    if (comm_size < 6) {
-        if (comm_rank == 0) {
-            change = SDK_Mark_Vertical_Availables(kMATRIX, assert_fail, 0, SIZE);
-
-            int32_t tmp_arr1[SIZE*SIZE];
-            int32_t tmp_arr2[SIZE*SIZE];
-            bool assert_fail1 = false;
-            bool assert_fail2 = false;
-            MPI_Recv(tmp_arr1, SIZE * SIZE, MPI_INT, 1, 0, MPI_COMM_WORLD, NULL);
-            MPI_Recv(assert_fail1, 1, MPI_BOOL, 1, 0, MPI_COMM_WORLD, NULL);
-            MPI_Recv(tmp_arr2, SIZE * SIZE, MPI_INT, 2, 0, MPI_COMM_WORLD, NULL);
-            MPI_Recv(assert_fail2, 1, MPI_BOOL, 2, 0, MPI_COMM_WORLD, NULL);
-            
-            if (assert_fail0 || assert_fail1 || assert_fail2) {
-                
-            }
-            change |= SDK_Apply(kMATRIX, tmp_arr1) || SDK_Apply(kMATRIX, tmp_arr2);
-            count++;
-        }
-        else if (comm_rank == 1) {
-            SDK_Mark_Horizontal_Availables(kMATRIX, assert_fail, 0, SIZE);
-            MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
-            MPI_Send(assert_fail, 1, MPI_BOOL, 0, 0, MPI_COMM_WORLD);
-        }
-        else if (comm_rank == 2) {
-            SDK_Mark_Subbox_Availables(kMATRIX, assert_fail, 0, SIZE);
-            MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
-            MPI_Send(assert_fail, 1, MPI_BOOL, 0, 0, MPI_COMM_WORLD);
-        }
-        else {
-            goto bailout;
-        }
-    }
-    else if (comm_size < 12) {
-        switch (comm_rank) {
-            case 0: {
-                change = SDK_Mark_Vertical_Availables(kMATRIX, 0, SIZE);
-                int32_t tmp_arr[SIZE*SIZE];
-                MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 1, 0, MPI_COMM_WORLD, NULL);
-                bool change_1 = SDK_Apply(kMATRIX, tmp_arr);
-                MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 2, 0, MPI_COMM_WORLD, NULL);
-                bool change_2 = SDK_Apply(kMATRIX, tmp_arr);
-                change = change || change_1 || change_2;
-                break;
-            }
-            case 1: {
-                SDK_Mark_Horizontal_Availables(kMATRIX, 0, SIZE/2+1);
-                int32_t tmp_arr[SIZE*SIZE];
-                MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 3, 0, MPI_COMM_WORLD, NULL);
-                bool change_3 = SDK_Apply(kMATRIX, tmp_arr);
-                MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 4, 0, MPI_COMM_WORLD, NULL);
-                bool change_4 = SDK_Apply(kMATRIX, tmp_arr);
-                MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
-                break;
-            }
-            case 2: {
-                SDK_Mark_Subbox_Availables(kMATRIX, 0, SIZE/2+1);
-                int32_t tmp_arr[SIZE*SIZE];
-                MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 5, 0, MPI_COMM_WORLD, NULL);
-                bool change_5 = SDK_Apply(kMATRIX, tmp_arr);
-                MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 6, 0, MPI_COMM_WORLD, NULL);
-                bool change_6 = SDK_Apply(kMATRIX, tmp_arr);
-                MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
-                break;
-            }
-            case 3: {
-                SDK_Mark_Horizontal_Availables(kMATRIX, SIZE/2+1, SIZE*3/4+1);
-                MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 1, 0, MPI_COMM_WORLD);
-                break;
-            }
-            case 4: {
-                SDK_Mark_Horizontal_Availables(kMATRIX, SIZE*3/4+1, SIZE);
-                MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 1, 0, MPI_COMM_WORLD);
-                break;
-            }
-            case 5: {
-                SDK_Mark_Subbox_Availables(kMATRIX, 0, SIZE/2+1);
-                MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 2, 0, MPI_COMM_WORLD);
-                break;
-            }
-            case 6: {
-                SDK_Mark_Subbox_Availables(kMATRIX, 0, SIZE/2+1);
-                MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 2, 0, MPI_COMM_WORLD);
-                break;
-            }
-            default:
-                goto bailout;
-        }
+    bool finish = false;
+    bool conflict = false;
+    int32_t* tmp = new int32_t[SIZE*SIZE];
+    vector<int32_t*> stack;
+    if (comm_rank == 0) {
+        memcpy(tmp, kMATRIX, SIZE*SIZE*sizeof(int32_t));
+        stack.push_back(tmp);
     }
 
-    MPI_Bcast(kMATRIX, SIZE * SIZE, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&change, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&assert_fail, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
-
-    // long ranger
-    if (!change) {
-        if (comm_rank == 0) {
-            change = SDK_Mark_Vertical_Availables_Long_Ranger(kMATRIX, 0, SIZE);
-            cout << "SDK_Mark_Vertical_Availables_Long_Ranger" << endl;
-            int32_t tmp_arr[SIZE*SIZE];
-            MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 1, 0, MPI_COMM_WORLD, NULL);
-            bool change_1 = SDK_Apply(kMATRIX, tmp_arr);
-            MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 2, 0, MPI_COMM_WORLD, NULL);
-            bool change_2 = SDK_Apply(kMATRIX, tmp_arr);
-            change = change || change_1 || change_2;
-        }
-        else if (comm_rank == 1) {
-            SDK_Mark_Horizontal_Availables_Long_Ranger(kMATRIX, 0, SIZE);
-            MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
-        }
-        else if (comm_rank == 2) {
-            SDK_Mark_Subbox_Availables_Long_Ranger(kMATRIX, 0, SIZE);
-            MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
-        }
-        else {
-            goto bailout;
-        }
-
-        MPI_Bcast(kMATRIX, SIZE * SIZE, MPI_INT, 0, MPI_COMM_WORLD);
-        MPI_Bcast(&change, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
-
-        // twin
-        if (!change) {
+    while (true) {
+        while (!conflict) {
+            // elimination
             if (comm_rank == 0) {
-                change = SDK_Mark_Vertical_Availables_Twins(kMATRIX, 0, SIZE);
-                cout << "SDK_Mark_Vertical_Availables_Twins" << endl;
-                int32_t tmp_arr[SIZE*SIZE];
-                MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 1, 0, MPI_COMM_WORLD, NULL);
-                bool change_1 = SDK_Apply(kMATRIX, tmp_arr);
-                MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 2, 0, MPI_COMM_WORLD, NULL);
-                bool change_2 = SDK_Apply(kMATRIX, tmp_arr);
-                change = change || change_1 || change_2;
+                change = SDK_Mark_Vertical_Availables(kMATRIX, assert_fail, 0, SIZE);
+                int32_t tmp_arr1[SIZE*SIZE];
+                int32_t tmp_arr2[SIZE*SIZE];
+                bool assert_fail1 = false;
+                bool assert_fail2 = false;
+                MPI_Recv(tmp_arr1, SIZE * SIZE, MPI_INT, 1, 0, MPI_COMM_WORLD, NULL);
+                MPI_Recv(assert_fail1, 1, MPI_C_BOOL, 1, 0, MPI_COMM_WORLD, NULL);
+                MPI_Recv(tmp_arr2, SIZE * SIZE, MPI_INT, 2, 0, MPI_COMM_WORLD, NULL);
+                MPI_Recv(assert_fail2, 1, MPI_C_BOOL, 2, 0, MPI_COMM_WORLD, NULL);
+                assert_fail |= assert_fail1 || assert_fail2;
+                change |= SDK_Apply(kMATRIX, tmp_arr1) || SDK_Apply(kMATRIX, tmp_arr2);
+                count++;
             }
             else if (comm_rank == 1) {
-                SDK_Mark_Horizontal_Availables_Twins(kMATRIX, 0, SIZE);
+                SDK_Mark_Horizontal_Availables(kMATRIX, assert_fail, 0, SIZE);
                 MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
+                MPI_Send(assert_fail, 1, MPI_C_BOOL, 0, 0, MPI_COMM_WORLD);
             }
             else if (comm_rank == 2) {
-                SDK_Mark_Subbox_Availables_Twins(kMATRIX, 0, SIZE);
+                SDK_Mark_Subbox_Availables(kMATRIX, assert_fail, 0, SIZE);
                 MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
+                MPI_Send(assert_fail, 1, MPI_C_BOOL, 0, 0, MPI_COMM_WORLD);
             }
             else {
-                goto bailout;
+                break;
             }
-
+            MPI_Bcast(&assert_fail, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+            if (assert_fail) break;
             MPI_Bcast(kMATRIX, SIZE * SIZE, MPI_INT, 0, MPI_COMM_WORLD);
             MPI_Bcast(&change, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
-
             if (!change) {
+                // long ranger
                 if (comm_rank == 0) {
-                    change = SDK_Mark_Vertical_Availables_Triplets(kMATRIX, 0, SIZE);
-                    cout << "SDK_Mark_Vertical_Availables_Triplets" << endl;
+                    change = SDK_Mark_Vertical_Availables_Long_Ranger(kMATRIX, 0, SIZE);
+                    // cout << "SDK_Mark_Vertical_Availables_Long_Ranger" << endl;
                     int32_t tmp_arr[SIZE*SIZE];
                     MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 1, 0, MPI_COMM_WORLD, NULL);
                     bool change_1 = SDK_Apply(kMATRIX, tmp_arr);
                     MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 2, 0, MPI_COMM_WORLD, NULL);
                     bool change_2 = SDK_Apply(kMATRIX, tmp_arr);
-                    change = change || change_1 || change_2;
+                    change |= || change_1 || change_2;
                 }
                 else if (comm_rank == 1) {
-                    SDK_Mark_Horizontal_Availables_Triplets(kMATRIX, 0, SIZE);
+                    SDK_Mark_Horizontal_Availables_Long_Ranger(kMATRIX, 0, SIZE);
                     MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
                 }
                 else if (comm_rank == 2) {
-                    SDK_Mark_Subbox_Availables_Triplets(kMATRIX, 0, SIZE);
+                    SDK_Mark_Subbox_Availables_Long_Ranger(kMATRIX, 0, SIZE);
                     MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
                 }
                 else {
-                    goto bailout;
+                    break;
                 }
-
                 MPI_Bcast(kMATRIX, SIZE * SIZE, MPI_INT, 0, MPI_COMM_WORLD);
                 MPI_Bcast(&change, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
-
                 if (!change) {
-                    queue<int32_t[]> stack;
-                    SDK_Permutations(kMATRIX, stack, 0, SIZE);
-                    for (int i=0; i<SIZE; i++) {
-
-                    }
+                    // twin
                     if (comm_rank == 0) {
-                        cout << "This cannot be solved!" << endl;
+                        change = SDK_Mark_Vertical_Availables_Twins(kMATRIX, 0, SIZE);
+                        // cout << "SDK_Mark_Vertical_Availables_Twins" << endl;
+                        int32_t tmp_arr[SIZE*SIZE];
+                        MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 1, 0, MPI_COMM_WORLD, NULL);
+                        bool change_1 = SDK_Apply(kMATRIX, tmp_arr);
+                        MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 2, 0, MPI_COMM_WORLD, NULL);
+                        bool change_2 = SDK_Apply(kMATRIX, tmp_arr);
+                        change |= || change_1 || change_2;
                     }
-                    goto bailout;
+                    else if (comm_rank == 1) {
+                        SDK_Mark_Horizontal_Availables_Twins(kMATRIX, 0, SIZE);
+                        MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
+                    }
+                    else if (comm_rank == 2) {
+                        SDK_Mark_Subbox_Availables_Twins(kMATRIX, 0, SIZE);
+                        MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
+                    }
+                    else {
+                        break;
+                    }
+                    MPI_Bcast(kMATRIX, SIZE * SIZE, MPI_INT, 0, MPI_COMM_WORLD);
+                    MPI_Bcast(&change, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+                    if (!change) {
+                        // triplets
+                        if (comm_rank == 0) {
+                            change = SDK_Mark_Vertical_Availables_Triplets(kMATRIX, 0, SIZE);
+                            // cout << "SDK_Mark_Vertical_Availables_Triplets" << endl;
+                            int32_t tmp_arr[SIZE*SIZE];
+                            MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 1, 0, MPI_COMM_WORLD, NULL);
+                            bool change_1 = SDK_Apply(kMATRIX, tmp_arr);
+                            MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 2, 0, MPI_COMM_WORLD, NULL);
+                            bool change_2 = SDK_Apply(kMATRIX, tmp_arr);
+                            change |= || change_1 || change_2;
+                        }
+                        else if (comm_rank == 1) {
+                            SDK_Mark_Horizontal_Availables_Triplets(kMATRIX, 0, SIZE);
+                            MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
+                        }
+                        else if (comm_rank == 2) {
+                            SDK_Mark_Subbox_Availables_Triplets(kMATRIX, 0, SIZE);
+                            MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
+                        }
+                        else {
+                            break;
+                        }
+                        MPI_Bcast(kMATRIX, SIZE * SIZE, MPI_INT, 0, MPI_COMM_WORLD);
+                        MPI_Bcast(&change, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+                        if (!change) {
+                            if (comm_rank == 0) {
+                                int32_t start_idx = 0;
+                                while (start_idx < SIZE*SIZE && is_field_literal(kMATRIX[start_idx]))
+                                    start_idx++;
+                                if (start_idx == SIZE*SIZE)
+                                    break;
+                                SDK_Permutations(kMATRIX, stack, start_idx, start_idx + 5);
+                            }
+                            break;
+                        }
+                    }
                 }
-                
+            }
+            if (comm_rank == 0) {
+                conflict = is_conflict(kMATRIX);
+            }
+            MPI_Bcast(&conflict, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+        }
+        if (SDK_Check_Breakdown(kMATRIX) && !is_conflict(kMATRIX)) {
+            break;
+        }
+        if (comm_rank == 0) {
+            if (stack.empty()) {
+                finish = true;
+                MPI_Send(finish, 1, MPI_C_BOOL, 1, 0, MPI_COMM_WORLD);
+                MPI_Send(finish, 1, MPI_C_BOOL, 2, 0, MPI_COMM_WORLD);
+                break;
+            }
+            else {
+                MPI_Send(finish, 1, MPI_C_BOOL, 1, 0, MPI_COMM_WORLD);
+                MPI_Send(finish, 1, MPI_C_BOOL, 2, 0, MPI_COMM_WORLD);
+                tmp = stack.back(); stack.pop_back();
+                memcpy(kMATRIX, tmp, SIZE*SIZE*sizeof(int32_t));
+                delete []tmp;
             }
         }
-    }
-
-    if (SDK_Check_Breakdown(kMATRIX)) {
-        if (is_master) {
-            SDK_Pretty_Print(kMATRIX);
+        else {
+            MPI_Recv(finish, 1, MPI_C_BOOL, 0, 0, MPI_COMM_WORLD, NULL);
+            if (finish) break;
         }
-    }
-    else {
-        goto retry;
+        MPI_Bcast(kMATRIX, SIZE * SIZE, MPI_INT, 0, MPI_COMM_WORLD);
     }
 
-bailout:
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
 
