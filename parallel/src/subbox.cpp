@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <vector>
+#include <assert.h>
 
 #include "field.h"
 
