@@ -56,28 +56,38 @@ int main(int argc, char *argv[]) {
     }
     int count = 0;
     bool change = true;
+    bool assert_fail = false;
 
 
 retry:
     if (comm_size < 6) {
         if (comm_rank == 0) {
-            change = SDK_Mark_Vertical_Availables(kMATRIX, 0, SIZE);
+            change = SDK_Mark_Vertical_Availables(kMATRIX, assert_fail, 0, SIZE);
 
-            int32_t tmp_arr[SIZE*SIZE];
-            MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 1, 0, MPI_COMM_WORLD, NULL);
-            bool change_hor = SDK_Apply(kMATRIX, tmp_arr);
-            MPI_Recv(tmp_arr, SIZE * SIZE, MPI_INT, 2, 0, MPI_COMM_WORLD, NULL);
-            bool change_sub = SDK_Apply(kMATRIX, tmp_arr);
-            change = change || change_hor || change_sub;
+            int32_t tmp_arr1[SIZE*SIZE];
+            int32_t tmp_arr2[SIZE*SIZE];
+            bool assert_fail1 = false;
+            bool assert_fail2 = false;
+            MPI_Recv(tmp_arr1, SIZE * SIZE, MPI_INT, 1, 0, MPI_COMM_WORLD, NULL);
+            MPI_Recv(assert_fail1, 1, MPI_BOOL, 1, 0, MPI_COMM_WORLD, NULL);
+            MPI_Recv(tmp_arr2, SIZE * SIZE, MPI_INT, 2, 0, MPI_COMM_WORLD, NULL);
+            MPI_Recv(assert_fail2, 1, MPI_BOOL, 2, 0, MPI_COMM_WORLD, NULL);
+            
+            if (assert_fail0 || assert_fail1 || assert_fail2) {
+                
+            }
+            change |= SDK_Apply(kMATRIX, tmp_arr1) || SDK_Apply(kMATRIX, tmp_arr2);
             count++;
         }
         else if (comm_rank == 1) {
-            SDK_Mark_Horizontal_Availables(kMATRIX, 0, SIZE);
+            SDK_Mark_Horizontal_Availables(kMATRIX, assert_fail, 0, SIZE);
             MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
+            MPI_Send(assert_fail, 1, MPI_BOOL, 0, 0, MPI_COMM_WORLD);
         }
         else if (comm_rank == 2) {
-            SDK_Mark_Subbox_Availables(kMATRIX, 0, SIZE);
+            SDK_Mark_Subbox_Availables(kMATRIX, assert_fail, 0, SIZE);
             MPI_Send(kMATRIX, SIZE * SIZE, MPI_INT, 0, 0, MPI_COMM_WORLD);
+            MPI_Send(assert_fail, 1, MPI_BOOL, 0, 0, MPI_COMM_WORLD);
         }
         else {
             goto bailout;
@@ -142,6 +152,7 @@ retry:
 
     MPI_Bcast(kMATRIX, SIZE * SIZE, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&change, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&assert_fail, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
 
     // long ranger
     if (!change) {
@@ -224,6 +235,11 @@ retry:
                 MPI_Bcast(&change, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
 
                 if (!change) {
+                    queue<int32_t[]> stack;
+                    SDK_Permutations(kMATRIX, stack, 0, SIZE);
+                    for (int i=0; i<SIZE; i++) {
+
+                    }
                     if (comm_rank == 0) {
                         cout << "This cannot be solved!" << endl;
                     }

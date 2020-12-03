@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
     N_2 = size;
     N = (int) sqrt(size);
     string output_dir = string(argv[2]);
-    vector<float> level({0.3, 0.5, 0.7});
+    vector<float> level({0.3, 0.4, 0.5, 0.6, 0.7});
 
     int counter = 0;
     while (counter < 5) {

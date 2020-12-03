@@ -5,37 +5,44 @@
 
 #include "field.h"
 
-bool SDK_Mark_Subbox_Availables(int32_t mtx[], int start_box_idx, int end_box_idx) {
+bool SDK_Mark_Subbox_Availables(int32_t mtx[], bool& assert_fail, int32_t start_box_idx, int32_t end_box_idx) {
     bool change = false;
     for (int32_t i = start_box_idx; i < end_box_idx; i++) {
         int32_t a = i / SIZE_MULTIPLIER;
         int32_t b = i % SIZE_MULTIPLIER;
         //  Find used numbers
-        int32_t result = 0;
+        int32_t result = 0, num_of_nonliteral = 0;
         for (int32_t c = 0; c < SIZE_MULTIPLIER; ++c) {
             for (int32_t d = 0; d < SIZE_MULTIPLIER; ++d) {
                 int32_t field = mtx[((a * SIZE_MULTIPLIER) + c) * SIZE + (b * SIZE_MULTIPLIER) + d];
-                if (is_field_literal(field)) {
+                if (is_field_literal(field))
                     result |= field;
-                }
+                else
+                    num_of_nonliteral++;
             }
         }
 
         //  Insert unused numbers to empty fields
         int32_t unused_numbers = result ^ ((1 << SIZE) - 1);
+        assert(count_One(unused_numbers) == num_of_nonliteral);
+
         for (int32_t c = 0; c < SIZE_MULTIPLIER; ++c) {
             for (int32_t d = 0; d < SIZE_MULTIPLIER; ++d) {
                 if (!is_field_literal(mtx[((a * SIZE_MULTIPLIER) + c) * SIZE + (b * SIZE_MULTIPLIER) + d])) {
                     int32_t old = mtx[((a * SIZE_MULTIPLIER) + c) * SIZE + (b * SIZE_MULTIPLIER) + d];
                     mtx[((a * SIZE_MULTIPLIER) + c) * SIZE + (b * SIZE_MULTIPLIER) + d] &= unused_numbers;
-                    change |= (old != mtx[((a * SIZE_MULTIPLIER) + c) * SIZE + (b * SIZE_MULTIPLIER) + d]);
+                    change |= old != mtx[((a * SIZE_MULTIPLIER) + c) * SIZE + (b * SIZE_MULTIPLIER) + d];
+                    if (mtx[((a * SIZE_MULTIPLIER) + c) * SIZE + (b * SIZE_MULTIPLIER) + d] == 0) {
+                        assert_fail = true;
+                        return true;
+                    }
                 }
             }
         }
     }
+    
     return change;
 }
-
 
 bool SDK_Mark_Subbox_Availables_Long_Ranger(int32_t mtx[], int start_box_idx, int end_box_idx) {
     bool change = false;
@@ -43,7 +50,7 @@ bool SDK_Mark_Subbox_Availables_Long_Ranger(int32_t mtx[], int start_box_idx, in
         int32_t a = i / SIZE_MULTIPLIER;
         int32_t b = i % SIZE_MULTIPLIER;
         int32_t result = 0;
-        std::vector<int> set_bits(SIZE, 0);
+        std::vector<std::vector<int> > set_bits(SIZE, std::vector<int>());
         for (int32_t c = 0; c < SIZE_MULTIPLIER; ++c) {
             for (int32_t d = 0; d < SIZE_MULTIPLIER; ++d) {
                 int32_t field = mtx[((a * SIZE_MULTIPLIER) + c) * SIZE + (b * SIZE_MULTIPLIER) + d];
@@ -52,7 +59,7 @@ bool SDK_Mark_Subbox_Availables_Long_Ranger(int32_t mtx[], int start_box_idx, in
                     while (field != 0 && count != SIZE) {
                         // check if the last bit is 1
                         if (field % 2 == 1) {
-                            set_bits[count]++;
+                            set_bits[count].push_back(c * SIZE_MULTIPLIER + d);
                         }
                         count++;
                         field = field >> 1;
@@ -60,21 +67,17 @@ bool SDK_Mark_Subbox_Availables_Long_Ranger(int32_t mtx[], int start_box_idx, in
                 }
             }
         }
-
         for (int i=0; i<SIZE; i++) {
-            if (set_bits[i] == 1) {
-                for (int32_t c = 0; c < SIZE_MULTIPLIER; ++c) {
-                    for (int32_t d = 0; d < SIZE_MULTIPLIER; ++d) {
-                        int32_t field = mtx[((a * SIZE_MULTIPLIER) + c) * SIZE + (b * SIZE_MULTIPLIER) + d];
-                        if (!is_field_literal(field)) {
-                            field = field >> i;
-                            if (field % 2 == 1) {
-                                mtx[((a * SIZE_MULTIPLIER) + c) * SIZE + (b * SIZE_MULTIPLIER) + d] = 1 << i;
-                                change = true;
-                                break;
-                            }
-                        }
-                    }
+            if (set_bits[i].size() == 1) {
+                int32_t c = set_bits[i][0] / SIZE_MULTIPLIER;
+                int32_t d = set_bits[i][0] % SIZE_MULTIPLIER;
+                int32_t field = mtx[((a * SIZE_MULTIPLIER) + c) * SIZE + (b * SIZE_MULTIPLIER) + d];
+                if (!is_field_literal(field)) {
+                    assert((field >> i) % 2 == 1);
+                    int32_t old = field;
+                    mtx[((a * SIZE_MULTIPLIER) + c) * SIZE + (b * SIZE_MULTIPLIER) + d] = 1 << i;
+                    assert(old != mtx[((a * SIZE_MULTIPLIER) + c) * SIZE + (b * SIZE_MULTIPLIER) + d]);
+                    change = true;
                 }
             }
         }
@@ -82,13 +85,13 @@ bool SDK_Mark_Subbox_Availables_Long_Ranger(int32_t mtx[], int start_box_idx, in
     return change;
 }
 
-
 bool SDK_Mark_Subbox_Availables_Twins(int32_t mtx[], int start_box_idx, int end_box_idx) {
+    // cout << "Subbox Twin" << endl;
     bool change = false;
     for (int32_t box = start_box_idx; box < end_box_idx; box++) {
         int32_t a = box / SIZE_MULTIPLIER;
         int32_t b = box % SIZE_MULTIPLIER;
-        std::vector<std::vector<int>> set_bits(SIZE, std::vector<int>());
+        std::vector<std::vector<int> > set_bits(SIZE, std::vector<int>());
         for (int32_t c = 0; c < SIZE_MULTIPLIER; ++c) {
             for (int32_t d = 0; d < SIZE_MULTIPLIER; ++d) {
                 int32_t field = mtx[((a * SIZE_MULTIPLIER) + c) * SIZE + (b * SIZE_MULTIPLIER) + d];
@@ -112,9 +115,10 @@ bool SDK_Mark_Subbox_Availables_Twins(int32_t mtx[], int start_box_idx, int end_
                 possible_twins_idx.push_back(i);
             }
         }
-        if (possible_twins_idx.size() < 2) {
+        if (possible_twins_idx.empty()) {
           continue;
         }
+        // cout << "possible_twins_idx size = " << possible_twins_idx.size() << endl;
         for (int i=0; i<possible_twins_idx.size()-1; i++) {
             for (int j=i+1; j<possible_twins_idx.size(); j++) {
                 if (set_bits[possible_twins_idx[i]][0] == set_bits[possible_twins_idx[j]][0] &&
@@ -126,11 +130,16 @@ bool SDK_Mark_Subbox_Availables_Twins(int32_t mtx[], int start_box_idx, int end_
                     int32_t d2 = set_bits[possible_twins_idx[i]][1] % SIZE_MULTIPLIER;
                     int32_t old_1 = mtx[((a * SIZE_MULTIPLIER) + c1) * SIZE + (b * SIZE_MULTIPLIER) + d1]; 
                     int32_t old_2 = mtx[((a * SIZE_MULTIPLIER) + c2) * SIZE + (b * SIZE_MULTIPLIER) + d2];
-                    mtx[((a * SIZE_MULTIPLIER) + c1) * SIZE + (b * SIZE_MULTIPLIER) + d1] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]);
-                    mtx[((a * SIZE_MULTIPLIER) + c2) * SIZE + (b * SIZE_MULTIPLIER) + d2] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]);
-                    change |= (old_1 != mtx[((a * SIZE_MULTIPLIER) + c1) * SIZE + (b * SIZE_MULTIPLIER) + d1]) ||
-                             (old_2 != mtx[((a * SIZE_MULTIPLIER) + c2) * SIZE + (b * SIZE_MULTIPLIER) + d2]);
-                    break;
+                    if ((old_1 >> possible_twins_idx[i]) % 2 == 1 &&
+                        (old_1 >> possible_twins_idx[j]) % 2 == 1 &&
+                        (old_2 >> possible_twins_idx[i]) % 2 == 1 &&
+                        (old_2 >> possible_twins_idx[j]) % 2 == 1) {
+                        mtx[((a * SIZE_MULTIPLIER) + c1) * SIZE + (b * SIZE_MULTIPLIER) + d1] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]);
+                        mtx[((a * SIZE_MULTIPLIER) + c2) * SIZE + (b * SIZE_MULTIPLIER) + d2] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]);
+                        change = (old_1 != mtx[((a * SIZE_MULTIPLIER) + c1) * SIZE + (b * SIZE_MULTIPLIER) + d1]) ||
+                                (old_2 != mtx[((a * SIZE_MULTIPLIER) + c2) * SIZE + (b * SIZE_MULTIPLIER) + d2]);
+                        break;
+                    }
                 }
             }
         }
@@ -143,7 +152,7 @@ bool SDK_Mark_Subbox_Availables_Triplets(int32_t mtx[], int start_box_idx, int e
     for (int32_t box = start_box_idx; box < end_box_idx; box++) {
         int32_t a = box / SIZE_MULTIPLIER;
         int32_t b = box % SIZE_MULTIPLIER;
-        std::vector<std::vector<int>> set_bits(SIZE, std::vector<int>());
+        std::vector<std::vector<int> > set_bits(SIZE, std::vector<int>());
         for (int32_t c = 0; c < SIZE_MULTIPLIER; ++c) {
             for (int32_t d = 0; d < SIZE_MULTIPLIER; ++d) {
                 int32_t field = mtx[((a * SIZE_MULTIPLIER) + c) * SIZE + (b * SIZE_MULTIPLIER) + d];
@@ -185,18 +194,24 @@ bool SDK_Mark_Subbox_Availables_Triplets(int32_t mtx[], int start_box_idx, int e
                         int32_t c2 = set_bits[possible_twins_idx[i]][1] / SIZE_MULTIPLIER;
                         int32_t d2 = set_bits[possible_twins_idx[i]][1] % SIZE_MULTIPLIER;
                         int32_t c3 = set_bits[possible_twins_idx[i]][2] / SIZE_MULTIPLIER;
-                        int32_t d3 = set_bits[possible_twins_idx[i]][3] % SIZE_MULTIPLIER;
+                        int32_t d3 = set_bits[possible_twins_idx[i]][2] % SIZE_MULTIPLIER;
                         int32_t old_1 = mtx[((a * SIZE_MULTIPLIER) + c1) * SIZE + (b * SIZE_MULTIPLIER) + d1]; 
                         int32_t old_2 = mtx[((a * SIZE_MULTIPLIER) + c2) * SIZE + (b * SIZE_MULTIPLIER) + d2];
                         int32_t old_3 = mtx[((a * SIZE_MULTIPLIER) + c3) * SIZE + (b * SIZE_MULTIPLIER) + d3];
-                        mtx[((a * SIZE_MULTIPLIER) + c1) * SIZE + (b * SIZE_MULTIPLIER) + d1] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]) + (1 << possible_twins_idx[k]);
-                        mtx[((a * SIZE_MULTIPLIER) + c2) * SIZE + (b * SIZE_MULTIPLIER) + d2] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]) + (1 << possible_twins_idx[k]);
-                        mtx[((a * SIZE_MULTIPLIER) + c3) * SIZE + (b * SIZE_MULTIPLIER) + d3] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]) + (1 << possible_twins_idx[k]);
-                        change = change ||
-                                (old_1 != mtx[((a * SIZE_MULTIPLIER) + c1) * SIZE + (b * SIZE_MULTIPLIER) + d1]) ||
-                                (old_2 != mtx[((a * SIZE_MULTIPLIER) + c2) * SIZE + (b * SIZE_MULTIPLIER) + d2]) ||
-                                (old_3 != mtx[((a * SIZE_MULTIPLIER) + c3) * SIZE + (b * SIZE_MULTIPLIER) + d3]);
-                        break;
+                        if (
+                            (old_1 >> possible_twins_idx[i]) % 2 == 1 && (old_1 >> possible_twins_idx[j]) % 2 == 1 && (old_1 >> possible_twins_idx[k]) % 2 == 1 &&
+                            (old_2 >> possible_twins_idx[i]) % 2 == 1 && (old_2 >> possible_twins_idx[j]) % 2 == 1 && (old_2 >> possible_twins_idx[k]) % 2 == 1 &&
+                            (old_3 >> possible_twins_idx[i]) % 2 == 1 && (old_3 >> possible_twins_idx[j]) % 2 == 1 && (old_3 >> possible_twins_idx[k]) % 2 == 1
+                        ) {
+                            mtx[((a * SIZE_MULTIPLIER) + c1) * SIZE + (b * SIZE_MULTIPLIER) + d1] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]) + (1 << possible_twins_idx[k]);
+                            mtx[((a * SIZE_MULTIPLIER) + c2) * SIZE + (b * SIZE_MULTIPLIER) + d2] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]) + (1 << possible_twins_idx[k]);
+                            mtx[((a * SIZE_MULTIPLIER) + c3) * SIZE + (b * SIZE_MULTIPLIER) + d3] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]) + (1 << possible_twins_idx[k]);
+                            change = change ||
+                                    (old_1 != mtx[((a * SIZE_MULTIPLIER) + c1) * SIZE + (b * SIZE_MULTIPLIER) + d1]) ||
+                                    (old_2 != mtx[((a * SIZE_MULTIPLIER) + c2) * SIZE + (b * SIZE_MULTIPLIER) + d2]) ||
+                                    (old_3 != mtx[((a * SIZE_MULTIPLIER) + c3) * SIZE + (b * SIZE_MULTIPLIER) + d3]);
+                            break;
+                        }
                     }
                 }
             }

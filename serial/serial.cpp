@@ -25,8 +25,10 @@ bool is_conflict(vector<vector<int> >& sudoku) {
         vector<bool> exist(N_2, false);
         for (int j=0; j<N_2; j++) {
             if (sudoku[i][j] != 0) {
-                if (exist[sudoku[i][j]-1])
+                if (exist[sudoku[i][j]-1]) {
+                    cout << "conflict at row " << i << endl;
                     return true;
+                }
                 else
                     exist[sudoku[i][j]-1] = true;
             }
@@ -37,14 +39,15 @@ bool is_conflict(vector<vector<int> >& sudoku) {
         exist.resize(N_2, false);
         for (int j=0; j<N_2; j++) {
             if (sudoku[j][i] != 0) {
-                if (exist[sudoku[j][i]-1])
+                if (exist[sudoku[j][i]-1]) {
+                    cout << "conflict at col " << i << endl;
                     return true;
+                }
                 else
                     exist[sudoku[j][i]-1] = true;
             }
         }
         exist.clear();
-
         // for each square
         exist.resize(N_2, false);
         int row_idx = i / N;
@@ -52,8 +55,10 @@ bool is_conflict(vector<vector<int> >& sudoku) {
         for (int j=row_idx*N; j<(row_idx+1)*N; j++) {
             for (int k=col_idx*N; k<(col_idx+1)*N; k++) {
                 if (sudoku[j][k] != 0) {
-                    if (exist[sudoku[j][k]-1])
+                    if (exist[sudoku[j][k]-1]) {
+                        cout << "conflict at box (" << row_idx << ", " << col_idx << ")" << endl;
                         return true;
+                    }
                     else
                         exist[sudoku[j][k]-1] = true;
                 }
@@ -121,6 +126,11 @@ int main(int argc, char* argv[]) {
         getline(file, line);
         vector<int> line_vector;
         int prev = 0;
+        for (; prev<line.size(); prev++) {
+            if (line[prev] != ' ') {
+                break;
+            }
+        }
         int i=prev;
         while (i < line.size()) {
             for (; i<line.size(); i++) {
@@ -130,7 +140,9 @@ int main(int argc, char* argv[]) {
             }
             int num = stoi(line.substr(prev, i));
             line_vector.push_back(num);
-            i++;
+            while (line[i] == ' ') {
+                i++;
+            }
             prev = i;
         }
         sudoku.push_back(line_vector);
@@ -147,7 +159,7 @@ int main(int argc, char* argv[]) {
         }
         cout << endl;
     }
-    string result = helper(sudoku) ? "true" : "false";
+    string result = helper(sudoku) ? "Solve the sudoku" : "Canot solve it";
     cout << result << endl;
     for (int i=0; i<N_2; i++) {
         for (int j=0; j<sudoku[0].size(); j++) {
@@ -156,7 +168,7 @@ int main(int argc, char* argv[]) {
         cout << endl;
     }
 
-    result = is_conflict(sudoku) ? "true" : "false";
+    result = is_conflict(sudoku) ? "Find conflict in result" : "No conflict";
     cout << result << endl;
 
     

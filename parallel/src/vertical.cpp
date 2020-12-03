@@ -6,63 +6,64 @@
 
 #include "field.h"
 
-bool SDK_Mark_Vertical_Availables(int32_t mtx[], int start_col, int end_col) {
+bool SDK_Mark_Vertical_Availables(int32_t mtx[], bool& assert_fail, int32_t start_col, int32_t end_col) {
     bool change = false;
     for (int32_t a = start_col; a < end_col; ++a) {
         //  Find used numbers
-        int32_t result = 0;
+        int32_t num_of_nonliteral = 0, result = 0;
         for (int32_t b = 0; b < SIZE; ++b) {
-            int32_t field = mtx[b * SIZE + a];
-            if (is_field_literal(field)) {
-                result |= field;
-            }
+            if (is_field_literal(mtx[b * SIZE + a]))
+                result |= mtx[b * SIZE + a];
+            else
+                num_of_nonliteral++;
         }
 
         //  Insert unused numbers to empty fields
         int32_t unused_numbers = result ^ ((1 << SIZE) - 1);
+        assert(count_One(unused_numbers) == num_of_nonliteral);
+
         for (int32_t b = 0; b < SIZE; ++b) {
             if (!is_field_literal(mtx[b * SIZE + a])) {
                 int32_t old = mtx[b * SIZE + a];
                 mtx[b * SIZE + a] &= unused_numbers;
-                change |= (old != mtx[b * SIZE + a]);
-                assert(mtx[b * SIZE + a] != 0);
+                change |= old != mtx[b * SIZE + a];
+                if (mtx[b * SIZE + a] == 0) {
+                    assert_fail = true;
+                    return true;
+                }
             }
         }
     }
     return change;
 }
 
-bool SDK_Mark_Vertical_Availables_Long_Ranger(int32_t mtx[], int start_col, int end_col) {
+bool SDK_Mark_Vertical_Availables_Long_Ranger(int32_t mtx[], int32_t start_col, int32_t end_col) {
     bool change = false;
     for (int32_t a = start_col; a < end_col; ++a) {
         int32_t result = 0;
-        std::vector<int> set_bits(SIZE, 0);
+        std::vector<std::vector<int> > set_bits(SIZE, std::vector<int>());
         for (int32_t b = 0; b < SIZE; ++b) {
             int32_t field = mtx[b * SIZE + a];
             if (!is_field_literal(field)) {
                 int count = 0;
                 while (field != 0 && count != SIZE) {
                     // check if the last bit is 1
-                    if (field % 2 == 1) {
-                        set_bits[count]++;
-                    }
+                    if (field % 2 == 1)
+                        set_bits[count].push_back(b);
                     count++;
                     field = field >> 1;
                 }
             }
         }
         for (int i=0; i<SIZE; i++) {
-            if (set_bits[i] == 1) {
-                for (int32_t b = 0; b < SIZE; ++b) {
-                    int32_t field = mtx[b * SIZE + a];
-                    if (!is_field_literal(field)) {
-                        field = field >> i;
-                        if (field % 2 == 1) {
-                            mtx[b * SIZE + a] = 1 << i;
-                            change = true;
-                            break;
-                        }
-                    }
+            if (set_bits[i].size() == 1) {
+                int32_t b = set_bits[i][0];
+                if (!is_field_literal(mtx[b * SIZE + a])) {
+                    assert((mtx[b * SIZE + a] >> i) % 2 == 1);
+                    int32_t old = mtx[b * SIZE + a];
+                    mtx[b * SIZE + a] = 1 << i;
+                    assert(old != mtx[b * SIZE + a]);
+                    change = true;
                 }
             }
         }
@@ -70,11 +71,10 @@ bool SDK_Mark_Vertical_Availables_Long_Ranger(int32_t mtx[], int start_col, int 
     return change;
 }
 
-
 bool SDK_Mark_Vertical_Availables_Twins(int32_t mtx[], int start_col, int end_col) {
     bool change = false;
     for (int32_t a = start_col; a < end_col; a++) {
-        std::vector<std::vector<int>> set_bits(SIZE, std::vector<int>());
+        std::vector<std::vector<int> > set_bits(SIZE, std::vector<int>());
         for (int32_t b = 0; b < SIZE; ++b) {
             int32_t field = mtx[b * SIZE + a];
             if (!is_field_literal(field)) {
@@ -95,8 +95,8 @@ bool SDK_Mark_Vertical_Availables_Twins(int32_t mtx[], int start_col, int end_co
                 possible_twins_idx.push_back(i);
             }
         }
-        if (possible_twins_idx.size() < 2) {
-          continue;
+        if (possible_twins_idx.empty()) {
+            continue;
         }
         for (int i=0; i<possible_twins_idx.size()-1; i++) {
             for (int j=i+1; j<possible_twins_idx.size(); j++) {
@@ -105,11 +105,16 @@ bool SDK_Mark_Vertical_Availables_Twins(int32_t mtx[], int start_col, int end_co
                     // remove other values
                     int32_t old_1 = mtx[set_bits[possible_twins_idx[i]][0] * SIZE + a];
                     int32_t old_2 = mtx[set_bits[possible_twins_idx[i]][1] * SIZE + a];
-                    mtx[set_bits[possible_twins_idx[i]][0] * SIZE + a] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]);
-                    mtx[set_bits[possible_twins_idx[i]][1] * SIZE + a] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]);
-                    change |= (old_1 != mtx[set_bits[possible_twins_idx[i]][0] * SIZE + a]) ||
-                             (old_2 != mtx[set_bits[possible_twins_idx[i]][1] * SIZE + a]);
-                    break;
+                    if ((old_1 >> possible_twins_idx[i]) % 2 == 1 &&
+                        (old_1 >> possible_twins_idx[j]) % 2 == 1 &&
+                        (old_2 >> possible_twins_idx[i]) % 2 == 1 &&
+                        (old_2 >> possible_twins_idx[j]) % 2 == 1) {
+                        mtx[set_bits[possible_twins_idx[i]][0] * SIZE + a] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]);
+                        mtx[set_bits[possible_twins_idx[i]][1] * SIZE + a] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]);
+                        change = (old_1 != mtx[set_bits[possible_twins_idx[i]][0] * SIZE + a]) ||
+                                (old_2 != mtx[set_bits[possible_twins_idx[i]][1] * SIZE + a]);
+                        break;
+                    }
                 }
             }
         }
@@ -120,7 +125,7 @@ bool SDK_Mark_Vertical_Availables_Twins(int32_t mtx[], int start_col, int end_co
 bool SDK_Mark_Vertical_Availables_Triplets(int32_t mtx[], int start_col, int end_col) {
     bool change = false;
     for (int32_t a = start_col; a < end_col; a++) {
-        std::vector<std::vector<int>> set_bits(SIZE, std::vector<int>());
+        std::vector<std::vector<int> > set_bits(SIZE, std::vector<int>());
         for (int32_t b = 0; b < SIZE; ++b) {
             int32_t field = mtx[b * SIZE + a];
             if (!is_field_literal(field)) {
@@ -142,7 +147,7 @@ bool SDK_Mark_Vertical_Availables_Triplets(int32_t mtx[], int start_col, int end
             }
         }
         if (possible_twins_idx.size() < 3) {
-          continue;
+            continue;
         }
         for (int i=0; i<possible_twins_idx.size()-2; i++) {
             for (int j=i+1; j<possible_twins_idx.size()-1; j++) {
@@ -157,14 +162,20 @@ bool SDK_Mark_Vertical_Availables_Triplets(int32_t mtx[], int start_col, int end
                         int32_t old_1 = mtx[set_bits[possible_twins_idx[i]][0] * SIZE + a];
                         int32_t old_2 = mtx[set_bits[possible_twins_idx[i]][1] * SIZE + a];
                         int32_t old_3 = mtx[set_bits[possible_twins_idx[i]][2] * SIZE + a];
-                        mtx[set_bits[possible_twins_idx[i]][0] * SIZE + a] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]) + (1 << possible_twins_idx[k]);
-                        mtx[set_bits[possible_twins_idx[i]][1] * SIZE + a] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]) + (1 << possible_twins_idx[k]);
-                        mtx[set_bits[possible_twins_idx[i]][2] * SIZE + a] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]) + (1 << possible_twins_idx[k]);
-                        change = change ||
-                                (old_1 != mtx[set_bits[possible_twins_idx[i]][0] * SIZE + a]) ||
-                                (old_2 != mtx[set_bits[possible_twins_idx[i]][1] * SIZE + a]) ||
-                                (old_3 != mtx[set_bits[possible_twins_idx[i]][2] * SIZE + a]);
-                        break;
+                        if (
+                            (old_1 >> possible_twins_idx[i]) % 2 == 1 && (old_1 >> possible_twins_idx[j]) % 2 == 1 && (old_1 >> possible_twins_idx[k]) % 2 == 1 &&
+                            (old_2 >> possible_twins_idx[i]) % 2 == 1 && (old_2 >> possible_twins_idx[j]) % 2 == 1 && (old_2 >> possible_twins_idx[k]) % 2 == 1 &&
+                            (old_3 >> possible_twins_idx[i]) % 2 == 1 && (old_3 >> possible_twins_idx[j]) % 2 == 1 && (old_3 >> possible_twins_idx[k]) % 2 == 1
+                        ) {
+                            mtx[set_bits[possible_twins_idx[i]][0] * SIZE + a] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]) + (1 << possible_twins_idx[k]);
+                            mtx[set_bits[possible_twins_idx[i]][1] * SIZE + a] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]) + (1 << possible_twins_idx[k]);
+                            mtx[set_bits[possible_twins_idx[i]][2] * SIZE + a] = (1 << possible_twins_idx[i]) + (1 << possible_twins_idx[j]) + (1 << possible_twins_idx[k]);
+                            change = change ||
+                                    (old_1 != mtx[set_bits[possible_twins_idx[i]][0] * SIZE + a]) ||
+                                    (old_2 != mtx[set_bits[possible_twins_idx[i]][1] * SIZE + a]) ||
+                                    (old_3 != mtx[set_bits[possible_twins_idx[i]][2] * SIZE + a]);
+                            break;
+                        }
                     }
                 }
             }
