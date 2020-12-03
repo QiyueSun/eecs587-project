@@ -183,3 +183,84 @@ void SDK_Permutations(int32_t mtx[], std::vector<int32_t*>& stack, int32_t start
     find_permus(mtx_copy, stack, index_value_map, available_value, 0, start_cell_idx, end_cell_idx);
     // cout << "stack size = " << stack.size() << endl;
 }
+
+bool is_conflict(int32_t sudoku[]) {
+    for (int i=0; i<SIZE; i++) {
+        // for each row
+        vector<bool> exist(SIZE, false);
+        int32_t nonexist = SIZE;
+        int32_t nonliteral = 0;
+        for (int j=0; j<SIZE; j++) {
+            if (is_field_literal(sudoku[i * SIZE + j])) {
+                if (exist[to_pretty(sudoku[i * SIZE + j])-1]) {
+                    // cout << "conflict at row " << i << endl;
+                    return true;
+                }
+                else
+                    exist[to_pretty(sudoku[i * SIZE + j])-1] = true;
+                    nonexist--;
+            }
+            else {
+                nonliteral++;
+            }
+        }
+        if (nonexist != nonliteral) {
+            // cout << "conflict at row " << i << endl;
+            return true;
+        }
+        exist.clear();
+
+        // for each col
+        exist.resize(SIZE, false);
+        nonexist = SIZE;
+        nonliteral = 0;
+        for (int j=0; j<SIZE; j++) {
+            if (is_field_literal(sudoku[j * SIZE + i])) {
+                if (exist[to_pretty(sudoku[j * SIZE + i])-1]) {
+                    // cout << "conflict at col " << i << endl;
+                    return true;
+                }
+                else {
+                    exist[to_pretty(sudoku[j * SIZE + i])-1] = true;
+                    nonexist--;
+                }
+            }
+            else {
+                nonliteral++;
+            }
+        }
+        if (nonexist != nonliteral) {
+            // cout << "conflict at col " << i << endl;
+            return true;
+        }
+        exist.clear();
+        // for each square
+        exist.resize(SIZE, false);
+        nonexist = SIZE;
+        nonliteral = 0;
+        int row_idx = i / SIZE_MULTIPLIER;
+        int col_idx = i % SIZE_MULTIPLIER;
+        for (int j=row_idx*SIZE_MULTIPLIER; j<(row_idx+1)*SIZE_MULTIPLIER; j++) {
+            for (int k=col_idx*SIZE_MULTIPLIER; k<(col_idx+1)*SIZE_MULTIPLIER; k++) {
+                if (is_field_literal(sudoku[j * SIZE + k])) {
+                    if (exist[to_pretty(sudoku[j * SIZE + k])-1]) {
+                        // cout << "conflict at box (" << row_idx << ", " << col_idx << ")" << endl;
+                        return true;
+                    }
+                    else {
+                        exist[to_pretty(sudoku[j * SIZE + k])-1] = true;
+                        nonexist--;
+                    }
+                }
+                else {
+                    nonliteral++;
+                }
+            }
+        }
+        if (nonexist != nonliteral) {
+            // cout << "conflict at box (" << row_idx << ", " << col_idx << ")" << endl;
+            return true;
+        }
+    }
+    return false;
+}
