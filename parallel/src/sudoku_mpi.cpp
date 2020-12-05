@@ -228,6 +228,7 @@ int main(int argc, char *argv[]) {
     if (comm_rank == 0) {
         double duration = MPI_Wtime() - time_start;
         cout << "p:" << comm_size << "\nRunning time:" << duration << endl;
+        SDK_Pretty_Print(kMATRIX);
     }
 
     // cout << "Total number of cores: " << max_threads << endl;
