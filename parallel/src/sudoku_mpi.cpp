@@ -25,7 +25,78 @@
 #include "subbox.h"
 #include "breakdown.h"
 
+#define WORKTAG 1
+#define DIETAG 2
+
 using namespace std;
+
+bool master(vector<int32_t*>& stack) {
+    MPI_Status status;
+    bool solved = false;
+    for (rank = 1; rank < 3; rank++) {
+        int32_t* task = stack.back(); stack.pop_back();
+        MPI_Send(task, SIZE*SIZE, MPI_INT, rank, WORKTAG, MPI_COMM_WORLD);
+        delete[] task;
+    }
+    while (!stack.empty()) {
+        MPI_Recv(&solved, 1, MPI_C_BOOL, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+        if (solved) {
+            MPI_Send(0, 0, MPI_INT, status.MPI_SOURCE, DIETAG, MPI_COMM_WORLD);
+            break;
+        }
+        int32_t* task = stack.back(); stack.pop_back();
+        MPI_Send(task, SIZE*SIZE, MPI_INT, status.MPI_SOURCE, WORKTAG, MPI_COMM_WORLD);
+        delete[] task;
+    }
+    if (solved) {
+        for (rank = 1; rank < 2; rank++) {
+            bool tmp = false;
+            MPI_Recv(&tmp, 1, MPI_C_BOOL, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+        }
+        for (rank = 1; rank < 2; rank++) {
+            MPI_Send(0, 0, MPI_INT, rank, DIETAG, MPI_COMM_WORLD);
+        }
+        int32_t* free = nullptr;
+        while (!stack.empty()) {
+            free = stack.back(); stack.pop_back();
+            delete[] free;
+        }
+    }
+    else {
+        for (rank = 1; rank < 3; rank++) {
+            bool tmp_solved = false;
+            MPI_Recv(&tmp_solved, 1, MPI_C_BOOL, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+            if (tmp_solved) {
+                solved = true;
+            }
+        }
+        for (rank = 1; rank < 3; rank++) {
+            MPI_Send(0, 0, MPI_INT, rank, DIETAG, MPI_COMM_WORLD);
+        }
+    }
+    if (!solved) {
+        cout << "Cannot find a solution" << endl;
+    }
+    else {
+        SDK_Pretty_Print(kMATRIX);
+    }
+    return solved;
+}
+
+void worker() {
+    int rank;
+    MPI_Status status;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    while (true) {
+        int32_t tmp[SIZE*SIZE];
+        MPI_Recv(tmp, SIZE*SIZE, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+        if (status.MPI_TAG == DIETAG) {
+            return;
+        }
+        bool solved = brute_force(tmp);
+        MPI_Send(&solved, 1, MPI_C_BOOL, 0, 0, MPI_COMM_WORLD);
+    }
+}
 
 int main(int argc, char *argv[]) {
     int32_t kMATRIX[SIZE*SIZE];
@@ -58,7 +129,9 @@ int main(int argc, char *argv[]) {
     bool change = true;
     bool assert_fail = false;
     bool finish = false;
+    bool brute_force = false;
     bool conflict = false;
+    bool solved = false;
     int32_t* tmp = new int32_t[SIZE*SIZE];
     vector<int32_t*> stack;
     if (comm_rank == 0) {
@@ -204,19 +277,43 @@ int main(int argc, char *argv[]) {
                 MPI_Send(&finish, 1, MPI_C_BOOL, 2, 0, MPI_COMM_WORLD);
                 break;
             }
-            else {
+            else if (stack.size() > 1000) {
+                cout << "stack size = " << stack.size() << endl;
+                finish = false;
                 MPI_Send(&finish, 1, MPI_C_BOOL, 1, 0, MPI_COMM_WORLD);
                 MPI_Send(&finish, 1, MPI_C_BOOL, 2, 0, MPI_COMM_WORLD);
+                brute_force = true;
+                MPI_Send(&brute_force, 1, MPI_C_BOOL, 1, 0, MPI_COMM_WORLD);
+                MPI_Send(&brute_force, 1, MPI_C_BOOL, 2, 0, MPI_COMM_WORLD);
+                solved = master(stack);
+                MPI_Send(&solved, 1, MPI_C_BOOL, 1, 0, MPI_COMM_WORLD);
+                MPI_Send(&solved, 1, MPI_C_BOOL, 2, 0, MPI_COMM_WORLD);
+            }
+            else {
+                finish = false;
+                MPI_Send(&finish, 1, MPI_C_BOOL, 1, 0, MPI_COMM_WORLD);
+                MPI_Send(&finish, 1, MPI_C_BOOL, 2, 0, MPI_COMM_WORLD);
+                brute_force = false;
+                MPI_Send(&brute_force, 1, MPI_C_BOOL, 1, 0, MPI_COMM_WORLD);
+                MPI_Send(&brute_force, 1, MPI_C_BOOL, 2, 0, MPI_COMM_WORLD);
                 tmp = stack.back(); stack.pop_back();
                 memcpy(kMATRIX, tmp, SIZE*SIZE*sizeof(int32_t));
-                delete []tmp;
+                delete[] tmp;
             }
         }
         else if (comm_rank == 1 || comm_rank == 2) {
             MPI_Recv(&finish, 1, MPI_C_BOOL, 0, 0, MPI_COMM_WORLD, NULL);
             if (finish) break;
+            MPI_Recv(&brute_force, 1, MPI_C_BOOL, 0, 0, MPI_COMM_WORLD, NULL);
+            if (brute_force) {
+                worker();
+                MPI_Recv(&solved, 1, MPI_C_BOOL, 0, 0, MPI_COMM_WORLD, NULL);
+            }
         }
         else {
+            break;
+        }
+        if (solved) {
             break;
         }
         MPI_Bcast(kMATRIX, SIZE * SIZE, MPI_INT, 0, MPI_COMM_WORLD);

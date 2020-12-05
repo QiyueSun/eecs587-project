@@ -6,6 +6,7 @@
 #include <iostream>
 #include <string.h>
 #include <bitset>
+#include <unordered_set>
 
 #include "field.h"
 
@@ -238,4 +239,50 @@ bool is_conflict(int32_t sudoku[]) {
         }
     }
     return false;
+}
+
+bool brute_force(int32_t mtx[]) {
+    if (is_conflict(mtx))
+        return false;
+    for (int i=0; i<SIZE; i++) {
+        for (int j=0; j<SIZE; j++) {
+            if (!is_field_literal(mtx[i * SIZE + j])) {
+                unordered_set<int32_t> possible_values;
+                int k = 1;
+                while (k < (1 << SIZE)) {
+                    possible_values.insert(k);
+                    k = k << 1;
+                }
+                for (int k=0; k<SIZE; k++) {
+                    // resolve conflict in row
+                    if (k != j && is_field_literal(mtx[i * SIZE + k])) {
+                        possible_values.erase(mtx[i * SIZE + k]);
+                    }
+                    // resolve conflict in column
+                    if (k != i && is_field_literal(mtx[k * SIZE + j])) {
+                        possible_values.erase(mtx[k * SIZE + j]);
+                    }
+                    int32_t c = (i / SIZE_MULTIPLIER) * SIZE_MULTIPLIER;
+                    int32_t d = (j / SIZE_MULTIPLIER) * SIZE_MULTIPLIER;
+                    int32_t idx = (c + k / SIZE_MULTIPLIER) * SIZE + d + k % SIZE_MULTIPLIER;
+                    if (idx != (i * SIZE + j) && is_field_literal(mtx[idx])) {
+                        possible_values.erase(mtx[idx]);
+                    }
+                }
+                if (possible_values.empty())
+                    return false;
+                auto it = possible_values.begin();
+                int32_t old = mtx[i * SIZE + j];
+                for (; it != possible_values.end(); it++) {
+                    mtx[i * SIZE + j] = *it;
+                    bool result = brute_force(mtx);
+                    if (result)
+                        return true;
+                }
+                mtx[i * SIZE + j] = old;
+                return false;
+            }
+        }
+    }
+    return true;
 }
