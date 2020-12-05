@@ -9,6 +9,7 @@
 #include <unordered_set>
 
 #include "field.h"
+#include "breakdown.h"
 
 using namespace std;
 
@@ -241,9 +242,11 @@ bool is_conflict(int32_t sudoku[]) {
     return false;
 }
 
-bool brute_force(int32_t mtx[]) {
+bool brute_force(int32_t mtx[], vector<int32_t*>& stack) {
     if (is_conflict(mtx))
         return false;
+	else if (SDK_Check_Breakdown(mtx))
+		return true;
     for (int i=0; i<SIZE; i++) {
         for (int j=0; j<SIZE; j++) {
             if (!is_field_literal(mtx[i * SIZE + j])) {
@@ -274,12 +277,15 @@ bool brute_force(int32_t mtx[]) {
                 auto it = possible_values.begin();
                 int32_t old = mtx[i * SIZE + j];
                 for (; it != possible_values.end(); it++) {
-                    mtx[i * SIZE + j] = *it;
-                    bool result = brute_force(mtx);
-                    if (result)
-                        return true;
+					int32_t *mtx_perm = new int32_t[SIZE*SIZE];
+                    memcpy(mtx_perm, mtx, SIZE*SIZE*sizeof(int32_t));
+                    mtx_perm[i * SIZE + j] = *it;
+					stack.push_back(mtx_perm);
+                    // bool result = brute_force(mtx);
+                    // if (result)
+                    //     return true;
                 }
-                mtx[i * SIZE + j] = old;
+                // mtx[i * SIZE + j] = old;
                 return false;
             }
         }
