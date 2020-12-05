@@ -11,102 +11,74 @@
 
 using namespace std;
 
-void bit_print(int32_t kMATRIX[])
-{
-  for (int i = 0; i < SIZE; i++)
-  {
-    for (int j = 0; j < SIZE; j++)
-    {
-      cout << std::bitset<16>(kMATRIX[i * SIZE + j]) << " ";
+void bit_print(int32_t kMATRIX[]) {
+    for (int i=0; i<SIZE; i++) {
+        for (int j=0; j<SIZE; j++) {
+            cout << std::bitset<16>(kMATRIX[i*SIZE + j]) << " ";
+        }
+        cout << endl;
     }
     cout << endl;
-  }
-  cout << endl;
 }
 
-void SDK_Import(string filepath, int32_t mtx[])
-{
-  ifstream file;
-  file.open(filepath);
-  int row_idx = 0;
-  while (!file.eof())
-  {
-    string line;
-    getline(file, line);
-    int prev = 0, col_idx = 0;
-    int i = prev;
-    while (i < line.size())
-    {
-      for (; i < line.size(); i++)
-      {
-        if (line[i] == ' ')
-          break;
-      }
-      int num = stoi(line.substr(prev, i));
-      mtx[row_idx * SIZE + col_idx] = translate_field(num);
-      i++;
-      prev = i;
-      col_idx++;
+void SDK_Import(string filepath, int32_t mtx[]) {
+    ifstream file;
+    file.open(filepath);
+    int row_idx = 0;
+    while (!file.eof()) {
+        string line;
+        getline(file, line);
+        int prev = 0, col_idx = 0;
+        int i = prev;
+        while (i < line.size()) {
+            for (; i<line.size(); i++) {
+                if (line[i] == ' ') break;
+            }
+            int num = stoi(line.substr(prev, i));
+            mtx[row_idx * SIZE + col_idx] = translate_field(num);
+            i++; prev = i; col_idx++;
+        }
+        row_idx++;
     }
-    row_idx++;
-  }
-  file.close();
+    file.close();
 }
 
-void SDK_Copy(int32_t src[], int32_t dst[])
-{
-  for (int32_t a = 0; a < SIZE; a++)
-  {
-    for (int32_t b = 0; b < SIZE; b++)
-    {
-      dst[a * SIZE + b] = src[a * SIZE + b];
+void SDK_Copy(int32_t dst[], int32_t src[]) {
+    for (int32_t a = 0; a < SIZE*SIZE; a++) {
+        dst[a] = src[a];
     }
-  }
 }
 
-void SDK_Print(int32_t mtx[])
-{
-  for (int32_t a = 0; a < SIZE; a++)
-  {
-    for (int32_t b = 0; b < SIZE; b++)
-    {
-      printf("%d ", mtx[a * SIZE + b]);
-    }
-    printf("\n");
-  }
+void SDK_Print(int32_t mtx[]) {
+	for (int32_t a = 0; a < SIZE; a++) {
+		for (int32_t b = 0; b < SIZE; b++) {
+			printf("%d ", mtx[a * SIZE + b]);
+		}
+		printf("\n");
+	}
 }
 
-void SDK_Pretty_Print(int32_t mtx[])
-{
-  for (int32_t a = 0; a < SIZE; a++)
-  {
-    for (int32_t b = 0; b < SIZE; b++)
-    {
-      printf("%d ", to_pretty(mtx[a * SIZE + b]));
+void SDK_Pretty_Print(int32_t mtx[]) {
+    for (int32_t a = 0; a < SIZE; a++) {
+        for (int32_t b = 0; b < SIZE; b++) {
+            printf("%2d ", to_pretty(mtx[a * SIZE + b]));
+        }
+        printf("\n");
     }
-    printf("\n");
-  }
+    cout << endl;
 }
 
 /*
   return change or not
 */
-bool SDK_Apply(int32_t dst[], int32_t src[])
-{
-  bool change = false;
-  for (int32_t a = 0; a < SIZE; a++)
-  {
-    for (int32_t b = 0; b < SIZE; b++)
-    {
-      int32_t old = dst[a * SIZE + b];
-      dst[a * SIZE + b] &= src[a * SIZE + b];
-      if (dst[a * SIZE + b] != old)
-      {
-        change = true;
-      }
+bool SDK_Apply(int32_t dst[], int32_t src[]) {
+    bool change = false;
+    for (int32_t a = 0; a < SIZE*SIZE; a++) {
+        int32_t old = dst[a];
+        dst[a] &= src[a];
+        if (dst[a] != old) change = true;
     }
-  }
-  return change;
+    return change;
 }
 
 bool find_permus(int32_t mtx_copy[], std::vector<int32_t*>& stack, 
@@ -201,7 +173,7 @@ bool is_conflict(int32_t sudoku[]) {
                 else {
                     exist[to_pretty(sudoku[i * SIZE + j])-1] = true;
                     nonexist--;
-                }
+				}
             }
             else {
                 nonliteral++;

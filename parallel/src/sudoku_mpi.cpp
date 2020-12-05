@@ -35,7 +35,6 @@ int main(int argc, char *argv[]) {
 
     int comm_size;
     int comm_rank;
-    bool is_master = false;
     double time_start;
 
     if (MPI_Comm_rank(MPI_COMM_WORLD, &comm_rank) != MPI_SUCCESS) {
@@ -53,7 +52,6 @@ int main(int argc, char *argv[]) {
             }
             cout << endl;
         }
-        is_master = true;
         time_start = MPI_Wtime();
     }
     int count = 0;
@@ -98,10 +96,10 @@ int main(int argc, char *argv[]) {
             else {
                 break;
             }
-            MPI_Bcast(&assert_fail, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
-            if (assert_fail) break;
             MPI_Bcast(kMATRIX, SIZE * SIZE, MPI_INT, 0, MPI_COMM_WORLD);
             MPI_Bcast(&change, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+            MPI_Bcast(&assert_fail, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+            if (assert_fail) break;
             if (!change) {
                 // long ranger
                 if (comm_rank == 0) {
@@ -214,9 +212,12 @@ int main(int argc, char *argv[]) {
                 delete []tmp;
             }
         }
-        else {
+        else if (comm_rank == 1 || comm_rank == 2) {
             MPI_Recv(&finish, 1, MPI_C_BOOL, 0, 0, MPI_COMM_WORLD, NULL);
             if (finish) break;
+        }
+        else {
+            break;
         }
         MPI_Bcast(kMATRIX, SIZE * SIZE, MPI_INT, 0, MPI_COMM_WORLD);
     }
