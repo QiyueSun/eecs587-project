@@ -33,6 +33,7 @@ using namespace std;
 bool master(vector<int32_t*>& stack) {
     MPI_Status status;
     bool solved = false;
+    int rank = 0;
     for (rank = 1; rank < 3; rank++) {
         int32_t* task = stack.back(); stack.pop_back();
         MPI_Send(task, SIZE*SIZE, MPI_INT, rank, WORKTAG, MPI_COMM_WORLD);
@@ -77,9 +78,6 @@ bool master(vector<int32_t*>& stack) {
     if (!solved) {
         cout << "Cannot find a solution" << endl;
     }
-    else {
-        SDK_Pretty_Print(kMATRIX);
-    }
     return solved;
 }
 
@@ -94,6 +92,9 @@ void worker() {
             return;
         }
         bool solved = brute_force(tmp);
+        if (solved) {
+            SDK_Pretty_Print(tmp);
+        }
         MPI_Send(&solved, 1, MPI_C_BOOL, 0, 0, MPI_COMM_WORLD);
     }
 }
