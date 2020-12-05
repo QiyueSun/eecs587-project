@@ -318,6 +318,11 @@ int main(int argc, char *argv[]) {
             break;
         }
         MPI_Bcast(kMATRIX, SIZE * SIZE, MPI_INT, 0, MPI_COMM_WORLD);
+        if (comm_rank == 0) {
+            conflict = is_conflict(kMATRIX);
+        }
+        MPI_Bcast(&conflict, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+        assert_fail = false;
     }
 
     MPI_Barrier(MPI_COMM_WORLD);
