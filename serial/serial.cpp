@@ -1090,6 +1090,35 @@ bool SDK_Mark_Subbox_Availables_Triplets(int32_t mtx[], int start_box_idx, int e
     return change;
 }
 
+int apply_humanistic(int32_t kMATRIX[]) {
+    while (!is_conflict(kMATRIX)) {
+        bool assert_fail = false;
+        bool change = SDK_Mark_Vertical_Availables(kMATRIX, assert_fail, 0, SIZE);
+        if (assert_fail) break;
+        change |= SDK_Mark_Horizontal_Availables(kMATRIX, assert_fail, 0, SIZE);
+        if (assert_fail) break;
+        change |= SDK_Mark_Subbox_Availables(kMATRIX, assert_fail, 0, SIZE);
+        if (assert_fail) break;
+        if (change) continue;
+        change = SDK_Mark_Vertical_Availables_Long_Ranger(kMATRIX, 0, SIZE);
+        change |= SDK_Mark_Horizontal_Availables_Long_Ranger(kMATRIX, 0, SIZE);
+        change |= SDK_Mark_Subbox_Availables_Long_Ranger(kMATRIX, 0, SIZE);
+        if (change) continue;
+        change = SDK_Mark_Vertical_Availables_Twins(kMATRIX, 0, SIZE);
+        change |= SDK_Mark_Horizontal_Availables_Twins(kMATRIX, 0, SIZE);
+        change |= SDK_Mark_Subbox_Availables_Twins(kMATRIX, 0, SIZE);
+        if (change) continue;
+        else break;
+    }
+    if (is_conflict(kMATRIX)) {
+        return 2;
+    }
+    else if (SDK_Check_Breakdown(kMATRIX)) {
+        return 0;
+    }
+    return 1;
+}
+
 bool brute_force(int32_t mtx[]) {
     if (is_conflict(mtx))
         return false;
@@ -1212,10 +1241,15 @@ int main(int argc, char *argv[]) {
                     int32_t* tmp = stack.back(); stack.pop_back();
                     memcpy(kMATRIX, tmp, SIZE*SIZE);
                     delete[] tmp;
-                    if (brute_force(kMATRIX)) {
-                        solved = true;
-                        break;
+                    int result = apply_humanistic(kMATRIX);
+                    solved = false;
+                    if (result == 1) {
+                        solved = brute_force(kMATRIX);
                     }
+                    else if (result == 0) {
+                        solved = true;
+                    }
+                    if (solved) break;
                 }
             }
             break;
