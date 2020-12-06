@@ -1227,8 +1227,8 @@ int main(int argc, char *argv[]) {
             break;
         }
     }
-    // SDK_More_Pretty_Print(kMATRIX);
     double duration = MPI_Wtime() - start_time;
     cout << "p:" << 1 << "\nRunning time:" << duration << endl;
+    SDK_More_Pretty_Print(kMATRIX);
     return 0;
 }
