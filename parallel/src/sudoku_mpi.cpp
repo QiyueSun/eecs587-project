@@ -34,9 +34,12 @@ bool master(vector<int32_t*>& stack) {
     MPI_Status status;
     bool solved = false;
     int rank = 0;
+    int comm_size;
+    MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
     /******* INITIAL SEND *******/
     // assign tasks for each worker
-    for (rank = 1; rank < 3; rank++) {
+    cout << "Initial Stage" << endl;
+    for (rank = 1; rank < comm_size; rank++) {
         int32_t* task = stack.back(); stack.pop_back();
         MPI_Send(task, SIZE*SIZE, MPI_INT, rank, WORKTAG, MPI_COMM_WORLD);
         delete[] task;
@@ -46,8 +49,10 @@ bool master(vector<int32_t*>& stack) {
     // 1. stack empty: enter STOP stage
     // 1. not empty && solved: enter STOP stage
     // 2. not empty && not solved: send task
+    cout << "Listen Stage stack size = " << stack.size() << endl;
     while (!stack.empty()) {
         MPI_Recv(&solved, 1, MPI_C_BOOL, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+        cout << "Receive solved = " << solved << endl;
         if (solved) {
             break;
         }
@@ -58,9 +63,11 @@ bool master(vector<int32_t*>& stack) {
     /******* STOP *******/
     // 1. solved: send stop to every worker
     // free stack if stack not empty
+    cout << "Stop Stage" << endl;
     if (solved) {
-        for (rank = 1; rank < 3; rank++) {
-            MPI_Send(0, 0, MPI_INT, rank, DIETAG, MPI_COMM_WORLD);
+        for (rank = 1; rank < comm_size; rank++) {
+            int stop = 1;
+            MPI_Send(&stop, 1, MPI_INT, rank, DIETAG, MPI_COMM_WORLD);
         }
         while (!stack.empty()) {
             int32_t* free = stack.back(); stack.pop_back();
@@ -68,14 +75,15 @@ bool master(vector<int32_t*>& stack) {
         }
     }
     else {
-        for (rank = 1; rank < 3; rank++) {
+        for (rank = 1; rank < comm_size; rank++) {
             MPI_Recv(&solved, 1, MPI_C_BOOL, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
             if (solved) {
                 break;
             }
         }
-        for (rank = 1; rank < 3; rank++) {
-            MPI_Send(0, 0, MPI_INT, rank, DIETAG, MPI_COMM_WORLD);
+        for (rank = 1; rank < comm_size; rank++) {
+            int stop = 1;
+            MPI_Send(&stop, 1, MPI_INT, rank, DIETAG, MPI_COMM_WORLD);
         }
     }
     if (!solved) {
@@ -90,50 +98,30 @@ void worker() {
     int stop; 
     int stop_flag;
     bool listen_on_stop = false;
-    vector<int32_t*> stack;
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     while (true) {
         int32_t tmp[SIZE*SIZE];
-        if (listen_on_stop) {
-            MPI_Test(&request, &stop_flag, MPI_STATUS_IGNORE);
-            if (stop_flag) {
-                while (!stack.empty()) {
-                    int32_t* free = stack.back(); stack.pop_back();
-                    delete[] free;
-                }
-                return;
-            }
-        }
-        if (stack.empty()) {
-            bool solved = false;
-            MPI_Send(&solved, 1, MPI_C_BOOL, 0, 0, MPI_COMM_WORLD);
-            MPI_Recv(tmp, SIZE*SIZE, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-            if (status.MPI_TAG == DIETAG) {
-                while (!stack.empty()) {
-                    int32_t* free = stack.back(); stack.pop_back();
-                    delete[] free;
-                }
-                return;
-            }
-        }
-        else {
-            int32_t* tmp_p = stack.back(); stack.pop_back();
-            memcpy(tmp, tmp_p, SIZE*SIZE*sizeof(int32_t));
-            delete[] tmp_p;
-        }
-        bool solved = brute_force(tmp, stack);
-        if (solved) {
-            SDK_Pretty_Print(tmp);
-            MPI_Send(&solved, 1, MPI_C_BOOL, 0, 0, MPI_COMM_WORLD);
-            if (listen_on_stop) MPI_Wait(&request, MPI_STATUS_IGNORE);
-            while (!stack.empty()) {
-                int32_t* free = stack.back(); stack.pop_back();
-                delete[] free;
-            }
+        MPI_Recv(tmp, SIZE*SIZE, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+        if (status.MPI_TAG == DIETAG) {
             return;
         }
         if (!listen_on_stop) {
-            MPI_Irecv(&stop, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &request);
+            MPI_Irecv(&stop, 1, MPI_INT, 0, DIETAG, MPI_COMM_WORLD, &request);
             listen_on_stop = true;
+        }
+        cout << "rank " << rank << " start brute force" << endl;
+        bool solved = brute_force(tmp, &request);
+        MPI_Test(&request, &stop_flag, MPI_STATUS_IGNORE);
+        if (stop_flag) {
+            MPI_Wait(&request, MPI_STATUS_IGNORE);
+            return;
+        }
+        MPI_Send(&solved, 1, MPI_C_BOOL, 0, 0, MPI_COMM_WORLD);
+        if (solved) {
+            SDK_Pretty_Print(tmp);
+            MPI_Wait(&request, MPI_STATUS_IGNORE);
+            return;
         }
     }
 }
@@ -317,7 +305,7 @@ int main(int argc, char *argv[]) {
                 MPI_Send(&finish, 1, MPI_C_BOOL, 2, 0, MPI_COMM_WORLD);
                 break;
             }
-            else if (stack.size() > 1000) {
+            else if (stack.size() > 4000) {
                 cout << "stack size = " << stack.size() << endl;
                 finish = false;
                 MPI_Send(&finish, 1, MPI_C_BOOL, 1, 0, MPI_COMM_WORLD);
@@ -326,10 +314,12 @@ int main(int argc, char *argv[]) {
                 MPI_Send(&brute_force, 1, MPI_C_BOOL, 1, 0, MPI_COMM_WORLD);
                 MPI_Send(&brute_force, 1, MPI_C_BOOL, 2, 0, MPI_COMM_WORLD);
                 solved = master(stack);
-                MPI_Send(&solved, 1, MPI_C_BOOL, 1, 0, MPI_COMM_WORLD);
-                MPI_Send(&solved, 1, MPI_C_BOOL, 2, 0, MPI_COMM_WORLD);
+                for (int i=1; i<comm_size; i++) {
+                    MPI_Send(&solved, 1, MPI_C_BOOL, i, 0, MPI_COMM_WORLD);
+                }
             }
             else {
+                cout << "stack size = " << stack.size() << endl;
                 finish = false;
                 MPI_Send(&finish, 1, MPI_C_BOOL, 1, 0, MPI_COMM_WORLD);
                 MPI_Send(&finish, 1, MPI_C_BOOL, 2, 0, MPI_COMM_WORLD);
@@ -351,7 +341,8 @@ int main(int argc, char *argv[]) {
             }
         }
         else {
-            break;
+            worker();
+            MPI_Recv(&solved, 1, MPI_C_BOOL, 0, 0, MPI_COMM_WORLD, NULL);
         }
         if (solved) {
             break;

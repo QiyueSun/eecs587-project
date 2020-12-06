@@ -4,6 +4,7 @@
 #include "defs.h"
 #include <string>
 #include <vector>
+#include <mpi.h>
 
 
 void bit_print(int32_t kMATRIX[]);
@@ -18,6 +19,6 @@ bool find_permus(int32_t mtx_copy[], std::vector<int32_t*>& stack,
                  int32_t i, int32_t start_cell_idx, int32_t end_cell_idx);
 void SDK_Permutations(int32_t mtx[], std::vector<int32_t*>& stack, int32_t start_cell_idx, int32_t end_cell_idx);
 bool is_conflict(int32_t sudoku[]);
-bool brute_force(int32_t mtx[], std::vector<int32_t*>& stack);
+bool brute_force(int32_t mtx[], MPI_Request* request);
 
 #endif

@@ -242,11 +242,13 @@ bool is_conflict(int32_t sudoku[]) {
     return false;
 }
 
-bool brute_force(int32_t mtx[], vector<int32_t*>& stack) {
+bool brute_force(int32_t mtx[], MPI_Request* request) {
+    int stop_flag;
+    MPI_Test(request, &stop_flag, MPI_STATUS_IGNORE);
+    if (stop_flag)
+        return true;
     if (is_conflict(mtx))
         return false;
-	else if (SDK_Check_Breakdown(mtx))
-		return true;
     for (int i=0; i<SIZE; i++) {
         for (int j=0; j<SIZE; j++) {
             if (!is_field_literal(mtx[i * SIZE + j])) {
@@ -277,15 +279,12 @@ bool brute_force(int32_t mtx[], vector<int32_t*>& stack) {
                 auto it = possible_values.begin();
                 int32_t old = mtx[i * SIZE + j];
                 for (; it != possible_values.end(); it++) {
-					int32_t *mtx_perm = new int32_t[SIZE*SIZE];
-                    memcpy(mtx_perm, mtx, SIZE*SIZE*sizeof(int32_t));
-                    mtx_perm[i * SIZE + j] = *it;
-					stack.push_back(mtx_perm);
-                    // bool result = brute_force(mtx);
-                    // if (result)
-                    //     return true;
+                    mtx[i * SIZE + j] = *it;
+                    bool result = brute_force(mtx, request);
+                    if (result)
+                        return true;
                 }
-                // mtx[i * SIZE + j] = old;
+                mtx[i * SIZE + j] = old;
                 return false;
             }
         }

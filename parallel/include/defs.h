@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#define SIZE_MULTIPLIER 3
+#define SIZE_MULTIPLIER 4
 #define SIZE (SIZE_MULTIPLIER * SIZE_MULTIPLIER)
 
 #endif
