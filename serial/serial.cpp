@@ -193,7 +193,7 @@
 #include <bitset>
 #include <fstream>
 #include <unordered_set>
-#include "mpi.h"
+#include <mpi.h>
 using namespace std; 
 
 #define SIZE_MULTIPLIER 4
